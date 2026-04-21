@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { saveAs } from "file-saver";
 import { Lock, Download, Loader2, FileText, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -9,6 +10,7 @@ import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { protectPdf } from "@/lib/browser/qpdf";
 
 export default function ProtectPDFPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -40,31 +42,17 @@ export default function ProtectPDFPage() {
     setIsProcessing(true);
 
     try {
-      // Note: pdf-lib doesn't support encryption natively
-      // This is a demonstration - in production you'd use a server-side solution
-      // or a library like pdf-lib-plus-encrypt
-      
-      const { PDFDocument } = await import("pdf-lib");
-      const { saveAs } = await import("file-saver");
-      
       const file = files[0];
       const arrayBuffer = await file.arrayBuffer();
-      const pdf = await PDFDocument.load(arrayBuffer);
+      const protectedPdf = await protectPdf(new Uint8Array(arrayBuffer), password);
 
-      // Add metadata to indicate protection intent
-      pdf.setTitle(`Protected: ${file.name}`);
-      pdf.setSubject("Password Protected Document");
-      
-      const pdfBytes = await pdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      if (!protectedPdf.outputBytes) {
+        throw new Error(protectedPdf.stderr.join("\n") || "Protection failed.");
+      }
+
+      const blob = new Blob([protectedPdf.outputBytes], { type: "application/pdf" });
       const originalName = file.name.replace(/\.pdf$/i, "");
       saveAs(blob, `${originalName}-protected.pdf`);
-
-      alert(
-        "Note: Full PDF encryption requires server-side processing. " +
-        "This demo prepares the PDF but actual password protection " +
-        "would need a backend service for full encryption."
-      );
     } catch (error) {
       console.error("Error protecting PDF:", error);
       alert("An error occurred. Please try again.");
@@ -152,7 +140,7 @@ export default function ProtectPDFPage() {
                     <div className="text-sm">
                       <p className="font-medium text-amber-800">Remember your password</p>
                       <p className="text-amber-700 mt-1">
-                        If you forget the password, the document cannot be recovered.
+                        If you forget the password, the protected document cannot be opened.
                       </p>
                     </div>
                   </div>

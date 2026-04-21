@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { saveAs } from "file-saver";
 import JSZip from "jszip";
 import { Image, Download, Loader2, FileText } from "lucide-react";
@@ -10,6 +10,7 @@ import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { getPdfJs } from "@/lib/browser/pdfjs";
 
 type ImageFormat = "png" | "jpeg";
 
@@ -19,20 +20,12 @@ export default function PDFToImagePage() {
   const [progress, setProgress] = useState(0);
   const [format, setFormat] = useState<ImageFormat>("png");
   const [totalPages, setTotalPages] = useState(0);
-  const [pdfjsLib, setPdfjsLib] = useState<typeof import("pdfjs-dist") | null>(null);
-
-  useEffect(() => {
-    // Dynamically import pdfjs-dist
-    import("pdfjs-dist").then((pdfjs) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-      setPdfjsLib(pdfjs);
-    });
-  }, []);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
-    if (newFiles.length > 0 && pdfjsLib) {
+    if (newFiles.length > 0) {
       try {
+        const pdfjsLib = await getPdfJs();
         const arrayBuffer = await newFiles[0].arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         setTotalPages(pdf.numPages);
@@ -45,12 +38,13 @@ export default function PDFToImagePage() {
   };
 
   const convertToImages = async () => {
-    if (files.length === 0 || !pdfjsLib) return;
+    if (files.length === 0) return;
 
     setIsProcessing(true);
     setProgress(0);
 
     try {
+      const pdfjsLib = await getPdfJs();
       const file = files[0];
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -69,6 +63,7 @@ export default function PDFToImagePage() {
         canvas.height = viewport.height;
 
         await page.render({
+          canvas,
           canvasContext: context,
           viewport: viewport,
         }).promise;
@@ -173,7 +168,7 @@ export default function PDFToImagePage() {
 
               <Button
                 onClick={convertToImages}
-                disabled={isProcessing || !pdfjsLib}
+                disabled={isProcessing}
                 className="w-full"
                 size="lg"
               >

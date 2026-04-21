@@ -1,6 +1,23 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
 import { FileStack, Download, Loader2, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
@@ -9,20 +26,117 @@ import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
+import type { QueuedFile } from "@/lib/browser/file-queue";
+import { reconcileQueuedFiles } from "@/lib/browser/file-queue";
 import { cn } from "@/lib/utils";
 
+interface SortableMergeFileRowProps {
+  file: QueuedFile;
+  index: number;
+  onMove: (index: number, direction: "up" | "down") => void;
+  total: number;
+}
+
+function SortableMergeFileRow({ file, index, onMove, total }: SortableMergeFileRowProps) {
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+    id: file.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={cn(
+        "flex items-center gap-3 rounded-lg bg-muted/50 p-3 transition-colors",
+        "hover:bg-muted",
+        isDragging && "bg-card shadow-lg ring-1 ring-border"
+      )}
+    >
+      <button
+        type="button"
+        className="cursor-grab text-muted-foreground active:cursor-grabbing"
+        aria-label={`Drag ${file.file.name}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-5 w-5" />
+      </button>
+      <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-xs font-medium text-primary">
+        {index + 1}
+      </span>
+      <span className="flex-1 truncate text-sm font-medium text-foreground">{file.file.name}</span>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onMove(index, "up")}
+          disabled={index === 0}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onMove(index, "down")}
+          disabled={index === total - 1}
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function MergePDFPage() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleFilesChange = useCallback((nextFiles: File[]) => {
+    setFiles((previousFiles) => reconcileQueuedFiles(nextFiles, previousFiles));
+  }, []);
 
   const moveFile = useCallback((index: number, direction: "up" | "down") => {
     setFiles((prev) => {
       const newFiles = [...prev];
       const newIndex = direction === "up" ? index - 1 : index + 1;
       if (newIndex < 0 || newIndex >= newFiles.length) return prev;
-      [newFiles[index], newFiles[newIndex]] = [newFiles[newIndex], newFiles[index]];
-      return newFiles;
+      return arrayMove(newFiles, index, newIndex);
+    });
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setFiles((previousFiles) => {
+      const oldIndex = previousFiles.findIndex((file) => file.id === active.id);
+      const newIndex = previousFiles.findIndex((file) => file.id === over.id);
+
+      if (oldIndex < 0 || newIndex < 0) {
+        return previousFiles;
+      }
+
+      return arrayMove(previousFiles, oldIndex, newIndex);
     });
   }, []);
 
@@ -36,7 +150,7 @@ export default function MergePDFPage() {
       const mergedPdf = await PDFDocument.create();
 
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        const file = files[i].file;
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await PDFDocument.load(arrayBuffer);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
@@ -68,8 +182,8 @@ export default function MergePDFPage() {
       >
         <div className="space-y-6">
           <FileDropzone
-            files={files}
-            onFilesChange={setFiles}
+            files={files.map((entry) => entry.file)}
+            onFilesChange={handleFilesChange}
             maxFiles={20}
             label="Drop PDF files to merge"
             description="Select multiple files to combine into one PDF"
@@ -80,48 +194,24 @@ export default function MergePDFPage() {
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-foreground">File Order</h3>
                 <p className="text-sm text-muted-foreground">
-                  Drag or use arrows to reorder
+                  Drag the handle or use the arrows to reorder
                 </p>
               </div>
-              <div className="space-y-2 rounded-lg border border-border p-4 bg-card">
-                {files.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-lg transition-colors",
-                      "bg-muted/50 hover:bg-muted"
-                    )}
-                  >
-                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                    <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-xs font-medium text-primary">
-                      {index + 1}
-                    </span>
-                    <span className="flex-1 text-sm font-medium text-foreground truncate">
-                      {file.name}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveFile(index, "up")}
-                        disabled={index === 0}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveFile(index, "down")}
-                        disabled={index === files.length - 1}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                    </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={files.map((file) => file.id)} strategy={verticalListSortingStrategy}>
+                  <div className="space-y-2 rounded-lg border border-border bg-card p-4">
+                    {files.map((file, index) => (
+                      <SortableMergeFileRow
+                        key={file.id}
+                        file={file}
+                        index={index}
+                        onMove={moveFile}
+                        total={files.length}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
 
               {isProcessing && (
                 <div className="space-y-2">

@@ -14,3 +14,8 @@ next.user-config.*
 node_modules
 .next/
 .DS_Store
+tsconfig.tsbuildinfo
+public/chromium-pack.tar
+public/pdf.worker.min.mjs
+public/qpdf.js
+public/qpdf.wasm

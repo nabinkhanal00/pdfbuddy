@@ -8,7 +8,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: 'PDF Tools - Free Online PDF Editor',
-    description: 'Free online PDF tools to merge, split, compress, convert, rotate, and edit PDF files. No registration required.',
+    description: 'Browser-first PDF tools to merge, split, compress, convert, rotate, and secure PDF files with minimal setup.',
     generator: 'nakh00',
     icons: {
         icon: [

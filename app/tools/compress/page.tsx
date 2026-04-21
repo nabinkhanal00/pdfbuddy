@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
 import { Minimize2, Download, Loader2, FileText, TrendingDown } from "lucide-react";
 import { Header } from "@/components/header";
@@ -10,6 +9,7 @@ import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { compressPdf } from "@/lib/browser/qpdf";
 
 type CompressionLevel = "low" | "medium" | "high";
 
@@ -35,30 +35,16 @@ export default function CompressPDFPage() {
       const file = files[0];
       const originalSize = file.size;
       const arrayBuffer = await file.arrayBuffer();
-      
-      // Load and re-save PDF with optimizations
-      const pdf = await PDFDocument.load(arrayBuffer, {
-        updateMetadata: false,
-      });
+      const compressed = await compressPdf(new Uint8Array(arrayBuffer), compressionLevel);
 
-      // Remove metadata for smaller size
-      pdf.setTitle("");
-      pdf.setAuthor("");
-      pdf.setSubject("");
-      pdf.setKeywords([]);
-      pdf.setProducer("");
-      pdf.setCreator("");
+      if (!compressed.outputBytes) {
+        throw new Error(compressed.stderr.join("\n") || "Compression failed.");
+      }
 
-      // Save with compression
-      const compressedBytes = await pdf.save({
-        useObjectStreams: compressionLevel !== "low",
-        addDefaultPage: false,
-      });
-
-      const compressedSize = compressedBytes.length;
+      const compressedSize = compressed.outputBytes.length;
       setResult({ original: originalSize, compressed: compressedSize });
 
-      const blob = new Blob([compressedBytes], { type: "application/pdf" });
+      const blob = new Blob([compressed.outputBytes], { type: "application/pdf" });
       const originalName = file.name.replace(/\.pdf$/i, "");
       saveAs(blob, `${originalName}-compressed.pdf`);
     } catch (error) {
@@ -153,11 +139,23 @@ export default function CompressPDFPage() {
                     </div>
                   </div>
                   <p className="text-sm text-green-700 mt-3">
-                    Saved{" "}
-                    <span className="font-semibold">
-                      {(((result.original - result.compressed) / result.original) * 100).toFixed(1)}%
-                    </span>{" "}
-                    ({formatFileSize(result.original - result.compressed)})
+                    {result.compressed <= result.original ? (
+                      <>
+                        Saved{" "}
+                        <span className="font-semibold">
+                          {(((result.original - result.compressed) / result.original) * 100).toFixed(1)}%
+                        </span>{" "}
+                        ({formatFileSize(result.original - result.compressed)})
+                      </>
+                    ) : (
+                      <>
+                        This profile produced a larger file by{" "}
+                        <span className="font-semibold">
+                          {formatFileSize(result.compressed - result.original)}
+                        </span>
+                        . The optimized file was still downloaded for comparison.
+                      </>
+                    )}
                   </p>
                 </div>
               )}

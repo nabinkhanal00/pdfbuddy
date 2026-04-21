@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
 import { Trash2, Download, Loader2, FileText, Check } from "lucide-react";
@@ -9,6 +10,7 @@ import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
+import { getPdfJs } from "@/lib/browser/pdfjs";
 import { cn } from "@/lib/utils";
 
 export default function RemovePagesPage() {
@@ -17,22 +19,15 @@ export default function RemovePagesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [pagePreviews, setPagePreviews] = useState<string[]>([]);
-  const [pdfjsLib, setPdfjsLib] = useState<typeof import("pdfjs-dist") | null>(null);
-
-  useEffect(() => {
-    import("pdfjs-dist").then((pdfjs) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-      setPdfjsLib(pdfjs);
-    });
-  }, []);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
     setSelectedPages(new Set());
     setPagePreviews([]);
 
-    if (newFiles.length > 0 && pdfjsLib) {
+    if (newFiles.length > 0) {
       try {
+        const pdfjsLib = await getPdfJs();
         const arrayBuffer = await newFiles[0].arrayBuffer();
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         setTotalPages(pdf.numPages);
@@ -52,6 +47,7 @@ export default function RemovePagesPage() {
           canvas.height = viewport.height;
           
           await page.render({
+            canvas,
             canvasContext: context,
             viewport: viewport,
           }).promise;
@@ -167,14 +163,19 @@ export default function RemovePagesPage() {
                       )}
                     >
                       {pagePreviews[pageNum - 1] ? (
-                        <img
-                          src={pagePreviews[pageNum - 1]}
-                          alt={`Page ${pageNum}`}
-                          className={cn(
-                            "w-full h-full object-cover",
-                            selectedPages.has(pageNum) && "opacity-50"
-                          )}
-                        />
+                        <div className="relative h-full w-full">
+                          <Image
+                            src={pagePreviews[pageNum - 1]}
+                            alt={`Page ${pageNum}`}
+                            fill
+                            unoptimized
+                            sizes="(max-width: 768px) 20vw, 12vw"
+                            className={cn(
+                              "object-cover",
+                              selectedPages.has(pageNum) && "opacity-50"
+                            )}
+                          />
+                        </div>
                       ) : (
                         <div className="w-full h-full bg-muted flex items-center justify-center">
                           <span className="text-xs text-muted-foreground">{pageNum}</span>

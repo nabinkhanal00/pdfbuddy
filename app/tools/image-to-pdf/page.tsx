@@ -1,6 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  rectSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
 import { FileImage, Download, Loader2, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
@@ -9,45 +27,168 @@ import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
+import type { QueuedFile } from "@/lib/browser/file-queue";
+import { reconcileQueuedFiles } from "@/lib/browser/file-queue";
 import { cn } from "@/lib/utils";
 
+interface SortableImageCardProps {
+  file: QueuedFile;
+  index: number;
+  onMove: (index: number, direction: "up" | "down") => void;
+  previewUrl?: string;
+  total: number;
+}
+
+function SortableImageCard({ file, index, onMove, previewUrl, total }: SortableImageCardProps) {
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+    id: file.id,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={cn("relative group rounded-lg border border-border overflow-hidden bg-card", isDragging && "z-10 shadow-xl")}
+    >
+      <div className="aspect-square bg-muted/50 flex items-center justify-center">
+        {previewUrl ? (
+          <div className="relative h-full w-full">
+            <Image
+              src={previewUrl}
+              alt={file.file.name}
+              fill
+              unoptimized
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded bg-muted animate-pulse" />
+        )}
+      </div>
+      <button
+        type="button"
+        className="absolute right-2 top-2 z-10 rounded-full bg-black/65 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+        aria-label={`Drag ${file.file.name}`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <div className="absolute inset-0 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center gap-2">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onMove(index, "up")}
+          disabled={index === 0}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => onMove(index, "down")}
+          disabled={index === total - 1}
+        >
+          <ArrowDown className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="absolute top-2 left-2 flex h-6 w-6 items-center justify-center rounded bg-primary text-xs font-medium text-primary-foreground">
+        {index + 1}
+      </div>
+    </div>
+  );
+}
+
 export default function ImageToPDFPage() {
-  const [files, setFiles] = useState<File[]>([]);
+  const [files, setFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<Record<string, string>>({});
+  const previewsRef = useRef<Record<string, string>>({});
 
-  const handleFileChange = (newFiles: File[]) => {
-    setFiles(newFiles);
-    // Generate previews
-    const newPreviews: string[] = [];
-    newFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        newPreviews.push(e.target?.result as string);
-        if (newPreviews.length === newFiles.length) {
-          setPreviews([...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  useEffect(() => {
+    return () => {
+      Object.values(previewsRef.current).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  const handleFileChange = useCallback((newFiles: File[]) => {
+    setFiles((previousFiles) => {
+      const nextFiles = reconcileQueuedFiles(newFiles, previousFiles);
+      const nextIds = new Set(nextFiles.map((file) => file.id));
+
+      setPreviews((previousPreviews) => {
+        const nextPreviews = { ...previousPreviews };
+
+        Object.entries(previousPreviews).forEach(([id, url]) => {
+          if (!nextIds.has(id)) {
+            URL.revokeObjectURL(url);
+            delete nextPreviews[id];
+          }
+        });
+
+        nextFiles.forEach((entry) => {
+          if (!nextPreviews[entry.id]) {
+            nextPreviews[entry.id] = URL.createObjectURL(entry.file);
+          }
+        });
+
+        previewsRef.current = nextPreviews;
+        return nextPreviews;
+      });
+
+      return nextFiles;
     });
-    if (newFiles.length === 0) {
-      setPreviews([]);
-    }
-  };
+  }, []);
 
   const moveFile = (index: number, direction: "up" | "down") => {
-    const newFiles = [...files];
-    const newPreviews = [...previews];
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= newFiles.length) return;
+    setFiles((previousFiles) => {
+      const nextIndex = direction === "up" ? index - 1 : index + 1;
+      if (nextIndex < 0 || nextIndex >= previousFiles.length) {
+        return previousFiles;
+      }
 
-    [newFiles[index], newFiles[newIndex]] = [newFiles[newIndex], newFiles[index]];
-    [newPreviews[index], newPreviews[newIndex]] = [newPreviews[newIndex], newPreviews[index]];
-
-    setFiles(newFiles);
-    setPreviews(newPreviews);
+      return arrayMove(previousFiles, index, nextIndex);
+    });
   };
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setFiles((previousFiles) => {
+      const oldIndex = previousFiles.findIndex((file) => file.id === active.id);
+      const newIndex = previousFiles.findIndex((file) => file.id === over.id);
+
+      if (oldIndex < 0 || newIndex < 0) {
+        return previousFiles;
+      }
+
+      return arrayMove(previousFiles, oldIndex, newIndex);
+    });
+  }, []);
+
+  const fileList = useMemo(() => files.map((entry) => entry.file), [files]);
 
   const convertToPDF = async () => {
     if (files.length === 0) return;
@@ -59,7 +200,7 @@ export default function ImageToPDFPage() {
       const pdf = await PDFDocument.create();
 
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        const file = files[i].file;
         const arrayBuffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
 
@@ -119,7 +260,7 @@ export default function ImageToPDFPage() {
       >
         <div className="space-y-6">
           <FileDropzone
-            files={files}
+            files={fileList}
             onFilesChange={handleFileChange}
             accept={{
               "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"],
@@ -135,52 +276,25 @@ export default function ImageToPDFPage() {
                 <h3 className="font-medium text-foreground">
                   {files.length} image{files.length !== 1 ? "s" : ""} selected
                 </h3>
-                <p className="text-sm text-muted-foreground">Drag or use arrows to reorder</p>
+                <p className="text-sm text-muted-foreground">Drag the handle or use the arrows to reorder</p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {files.map((file, index) => (
-                  <div
-                    key={`${file.name}-${index}`}
-                    className="relative group rounded-lg border border-border overflow-hidden bg-card"
-                  >
-                    <div className="aspect-square bg-muted/50 flex items-center justify-center">
-                      {previews[index] ? (
-                        <img
-                          src={previews[index]}
-                          alt={file.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded bg-muted animate-pulse" />
-                      )}
-                    </div>
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveFile(index, "up")}
-                        disabled={index === 0}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => moveFile(index, "down")}
-                        disabled={index === files.length - 1}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="absolute top-2 left-2 flex h-6 w-6 items-center justify-center rounded bg-primary text-xs font-medium text-primary-foreground">
-                      {index + 1}
-                    </div>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={files.map((file) => file.id)} strategy={rectSortingStrategy}>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {files.map((file, index) => (
+                      <SortableImageCard
+                        key={file.id}
+                        file={file}
+                        index={index}
+                        onMove={moveFile}
+                        previewUrl={previews[file.id]}
+                        total={files.length}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
 
               {isProcessing && (
                 <div className="space-y-2">

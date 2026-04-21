@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
-import { Unlock, Download, Loader2, FileText, Eye, EyeOff, CheckCircle, XCircle } from "lucide-react";
+import { Unlock, Download, Loader2, FileText, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
@@ -11,6 +10,7 @@ import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { inspectPdfEncryption, unlockPdf } from "@/lib/browser/qpdf";
 
 export default function UnlockPDFPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -30,14 +30,9 @@ export default function UnlockPDFPage() {
 
     if (newFiles.length > 0) {
       try {
-        const arrayBuffer = await newFiles[0].arrayBuffer();
-        try {
-          await PDFDocument.load(arrayBuffer);
-          setIsEncrypted(false);
-        } catch {
-          // If loading fails, it might be encrypted
-          setIsEncrypted(true);
-        }
+        const arrayBuffer = new Uint8Array(await newFiles[0].arrayBuffer());
+        const state = await inspectPdfEncryption(arrayBuffer);
+        setIsEncrypted(state.isEncrypted);
       } catch (error) {
         console.error("Error reading PDF:", error);
       }
@@ -52,21 +47,16 @@ export default function UnlockPDFPage() {
 
     try {
       const file = files[0];
-      const arrayBuffer = await file.arrayBuffer();
-      
-      // Try to load with password
-      const pdf = await PDFDocument.load(arrayBuffer, {
-        password: password || undefined,
-        ignoreEncryption: true,
-      });
+      const arrayBuffer = new Uint8Array(await file.arrayBuffer());
+      const unlocked = await unlockPdf(arrayBuffer, password);
 
-      // Create a new unencrypted PDF
-      const newPdf = await PDFDocument.create();
-      const pages = await newPdf.copyPages(pdf, pdf.getPageIndices());
-      pages.forEach((page) => newPdf.addPage(page));
+      if (!unlocked.passwordAccepted || !unlocked.outputBytes) {
+        setUnlockSuccess(false);
+        alert("Could not unlock the PDF. Please check the password and try again.");
+        return;
+      }
 
-      const pdfBytes = await newPdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const blob = new Blob([unlocked.outputBytes], { type: "application/pdf" });
       const originalName = file.name.replace(/\.pdf$/i, "");
       saveAs(blob, `${originalName}-unlocked.pdf`);
       
@@ -74,10 +64,7 @@ export default function UnlockPDFPage() {
     } catch (error) {
       console.error("Error unlocking PDF:", error);
       setUnlockSuccess(false);
-      alert(
-        "Could not unlock the PDF. Please check the password and try again. " +
-        "Note: Some PDFs with strong encryption may not be unlockable."
-      );
+      alert("Could not unlock the PDF. Please check the password and try again.");
     } finally {
       setIsProcessing(false);
     }

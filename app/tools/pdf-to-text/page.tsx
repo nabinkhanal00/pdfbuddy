@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { saveAs } from "file-saver";
 import { FileText, Download, Loader2, Copy, Check } from "lucide-react";
 import { Header } from "@/components/header";
@@ -8,20 +8,13 @@ import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
+import { getPdfJs, getTextItemString } from "@/lib/browser/pdfjs";
 
 export default function PDFToTextPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [extractedText, setExtractedText] = useState("");
   const [copied, setCopied] = useState(false);
-  const [pdfjsLib, setPdfjsLib] = useState<typeof import("pdfjs-dist") | null>(null);
-
-  useEffect(() => {
-    import("pdfjs-dist").then((pdfjs) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-      setPdfjsLib(pdfjs);
-    });
-  }, []);
 
   const handleFileChange = (newFiles: File[]) => {
     setFiles(newFiles);
@@ -29,12 +22,13 @@ export default function PDFToTextPage() {
   };
 
   const extractText = async () => {
-    if (files.length === 0 || !pdfjsLib) return;
+    if (files.length === 0) return;
 
     setIsProcessing(true);
     setExtractedText("");
 
     try {
+      const pdfjsLib = await getPdfJs();
       const file = files[0];
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -44,9 +38,7 @@ export default function PDFToTextPage() {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map((item: { str?: string }) => item.str || "")
-          .join(" ");
+        const pageText = textContent.items.map(getTextItemString).join(" ");
         fullText += `--- Page ${i} ---\n${pageText}\n\n`;
       }
 
@@ -98,7 +90,7 @@ export default function PDFToTextPage() {
           {files.length > 0 && !extractedText && (
             <Button
               onClick={extractText}
-              disabled={isProcessing || !pdfjsLib}
+              disabled={isProcessing}
               className="w-full"
               size="lg"
             >

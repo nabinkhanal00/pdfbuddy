@@ -33,8 +33,8 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="hidden md:inline-flex">
-              All Tools
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+              <Link href="/#all-tools">All Tools</Link>
             </Button>
             <Button
               variant="ghost"
