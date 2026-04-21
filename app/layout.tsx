@@ -11,20 +11,8 @@ export const metadata: Metadata = {
     description: 'Browser-first PDF tools to merge, split, compress, convert, rotate, and secure PDF files with minimal setup.',
     generator: 'nakh00',
     icons: {
-        icon: [
-            {
-                url: '/icon-light-32x32.png',
-                media: '(prefers-color-scheme: light)',
-            },
-            {
-                url: '/icon-dark-32x32.png',
-                media: '(prefers-color-scheme: dark)',
-            },
-            {
-                url: '/icon.svg',
-                type: 'image/svg+xml',
-            },
-        ],
+        icon: '/icon.svg',
+        shortcut: '/icon.svg',
         apple: '/apple-icon.png',
     },
 }

@@ -10,10 +10,10 @@ export function ToolCard({ tool }: ToolCardProps) {
   const Icon = tool.icon;
 
   return (
-    <Link href={tool.href} className="group block">
+    <Link href={tool.href} className="group flex h-full">
       <div
         className={cn(
-          "relative rounded-xl p-6 transition-all duration-200",
+          "relative flex h-full min-h-[16rem] w-full flex-col rounded-xl p-6 transition-all duration-200",
           "border border-border bg-card",
           "hover:shadow-lg hover:border-transparent hover:scale-[1.02]",
           tool.bgColor
@@ -27,10 +27,12 @@ export function ToolCard({ tool }: ToolCardProps) {
         >
           <Icon className={cn("h-6 w-6", tool.color)} />
         </div>
-        <h3 className="font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
-          {tool.name}
-        </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed">{tool.description}</p>
+        <div className="flex flex-1 flex-col">
+          <h3 className="mb-2 font-semibold text-foreground transition-colors group-hover:text-primary">
+            {tool.name}
+          </h3>
+          <p className="text-sm leading-relaxed text-muted-foreground">{tool.description}</p>
+        </div>
       </div>
     </Link>
   );
