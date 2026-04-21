@@ -81,7 +81,7 @@ export default function HomePage() {
         <section className="border-y border-border bg-card py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-12 text-center">
-              <h2 className="text-3xl font-bold text-foreground">Why choose PDF Tools?</h2>
+              <h2 className="text-3xl font-bold text-foreground">Why choose PDF Buddy?</h2>
               <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
                 Fast file work, clear security boundaries, and no account friction
               </p>

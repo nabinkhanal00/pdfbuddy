@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: 'PDF Tools - Free Online PDF Editor',
+    title: 'PDF Buddy - Free Online PDF Editor',
     description: 'Browser-first PDF tools to merge, split, compress, convert, rotate, and secure PDF files with minimal setup.',
     generator: 'nakh00',
     icons: {
