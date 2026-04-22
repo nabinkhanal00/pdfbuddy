@@ -180,3 +180,20 @@ export const categories = [
   { id: "edit", name: "Edit PDF", description: "Compress, add watermarks, and modify PDFs" },
   { id: "security", name: "PDF Security", description: "Protect and unlock PDF documents" },
 ];
+
+const pdfHandoffTargetIds = new Set([
+  "merge",
+  "compress",
+  "split",
+  "remove-pages",
+  "rotate",
+  "pdf-to-image",
+  "pdf-to-text",
+  "page-numbers",
+  "watermark",
+  "reorder",
+  "protect",
+  "unlock",
+]);
+
+export const pdfHandoffTargets = pdfTools.filter((tool) => pdfHandoffTargetIds.has(tool.id));

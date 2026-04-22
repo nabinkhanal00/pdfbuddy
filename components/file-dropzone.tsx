@@ -61,31 +61,36 @@ export function FileDropzone({
       <div
         {...getRootProps()}
         className={cn(
-          "relative cursor-pointer rounded-xl border-2 border-dashed p-12 text-center transition-all duration-200",
+          "relative cursor-pointer rounded-xl border-2 border-dashed transition-all duration-200",
+          files.length > 0 ? "p-6" : "p-12",
           isDragActive
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/50"
         )}
       >
         <input {...getInputProps()} />
-        <div className="flex flex-col items-center gap-4">
+        <div className={cn("flex items-center justify-center gap-4", files.length > 0 ? "flex-row" : "flex-col")}>
           <div
             className={cn(
-              "flex h-16 w-16 items-center justify-center rounded-full transition-colors",
+              "flex items-center justify-center rounded-full transition-colors",
+              files.length > 0 ? "h-10 w-10" : "h-16 w-16",
               isDragActive ? "bg-primary/10" : "bg-muted"
             )}
           >
             <Upload
               className={cn(
-                "h-8 w-8 transition-colors",
+                "transition-colors",
+                files.length > 0 ? "h-5 w-5" : "h-8 w-8",
                 isDragActive ? "text-primary" : "text-muted-foreground"
               )}
             />
           </div>
-          <div>
-            <p className="text-lg font-medium text-foreground">{label}</p>
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
-            <p className="text-xs text-muted-foreground mt-2">
+          <div className={files.length > 0 ? "text-left" : "text-center"}>
+            <p className={cn("font-medium text-foreground", files.length > 0 ? "text-base" : "text-lg")}>
+              {files.length > 0 ? "Add more files" : label}
+            </p>
+            {files.length === 0 && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+            <p className="text-xs text-muted-foreground mt-1">
               Max {formatFileSize(maxSize)} per file{multiple ? `, up to ${maxFiles} files` : ""}
             </p>
           </div>

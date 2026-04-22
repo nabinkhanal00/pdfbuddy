@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { saveAs } from "file-saver";
-import { Unlock, Download, Loader2, FileText, Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Unlock, Loader2, FileText, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { inspectPdfEncryption, unlockPdf } from "@/lib/browser/qpdf";
 
 export default function UnlockPDFPage() {
@@ -20,6 +21,9 @@ export default function UnlockPDFPage() {
   const [isEncrypted, setIsEncrypted] = useState<boolean | null>(null);
   const [unlockAttempted, setUnlockAttempted] = useState(false);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -27,6 +31,7 @@ export default function UnlockPDFPage() {
     setUnlockAttempted(false);
     setUnlockSuccess(false);
     setPassword("");
+    setProcessedPdf(null);
 
     if (newFiles.length > 0) {
       try {
@@ -56,9 +61,11 @@ export default function UnlockPDFPage() {
         return;
       }
 
-      const blob = new Blob([unlocked.outputBytes], { type: "application/pdf" });
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-unlocked.pdf`);
+      setProcessedPdf({
+        bytes: Uint8Array.from(unlocked.outputBytes),
+        fileName: `${originalName}-unlocked.pdf`,
+      });
       
       setUnlockSuccess(true);
     } catch (error) {
@@ -69,6 +76,8 @@ export default function UnlockPDFPage() {
       setIsProcessing(false);
     }
   };
+
+  usePendingPdfImport(handleFileChange);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -123,7 +132,10 @@ export default function UnlockPDFPage() {
                           id="password"
                           type={showPassword ? "text" : "password"}
                           value={password}
-                          onChange={(e) => setPassword(e.target.value)}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            setProcessedPdf(null);
+                          }}
                           placeholder="Enter PDF password"
                           className="pr-10"
                         />
@@ -169,12 +181,17 @@ export default function UnlockPDFPage() {
                       Unlocking...
                     </>
                   ) : (
-                    <>
-                      <Download className="h-4 w-4 mr-2" />
-                      Unlock & Download
-                    </>
+                    "Unlock PDF"
                   )}
                 </Button>
+              )}
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="unlock"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
               )}
             </div>
           )}

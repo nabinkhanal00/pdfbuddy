@@ -10,6 +10,7 @@ import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { getPdfJs } from "@/lib/browser/pdfjs";
 
 type ImageFormat = "png" | "jpeg";
@@ -36,6 +37,8 @@ export default function PDFToImagePage() {
       setTotalPages(0);
     }
   };
+
+  usePendingPdfImport(handleFileChange);
 
   const convertToImages = async () => {
     if (files.length === 0) return;

@@ -12,6 +12,7 @@ import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 
 type SplitMode = "range" | "extract" | "every";
 
@@ -59,6 +60,8 @@ export default function SplitPDFPage() {
 
     return Array.from(pages).sort((a, b) => a - b);
   };
+
+  usePendingPdfImport(handleFileChange);
 
   const splitPDF = async () => {
     if (files.length === 0) return;

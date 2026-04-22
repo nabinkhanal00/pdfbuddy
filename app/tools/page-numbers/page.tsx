@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-import { saveAs } from "file-saver";
-import { ListOrdered, Download, Loader2, FileText } from "lucide-react";
+import { ListOrdered, Loader2, FileText } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 
 type Position = "bottom-center" | "bottom-left" | "bottom-right" | "top-center" | "top-left" | "top-right";
 
@@ -21,9 +22,13 @@ export default function PageNumbersPage() {
   const [position, setPosition] = useState<Position>("bottom-center");
   const [startNumber, setStartNumber] = useState(1);
   const [format, setFormat] = useState<"number" | "of">("number");
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
+    setProcessedPdf(null);
     if (newFiles.length > 0) {
       try {
         const arrayBuffer = await newFiles[0].arrayBuffer();
@@ -83,10 +88,12 @@ export default function PageNumbersPage() {
         });
       });
 
-      const pdfBytes = await pdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const pdfBytes = new Uint8Array(await pdf.save());
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-numbered.pdf`);
+      setProcessedPdf({
+        bytes: pdfBytes,
+        fileName: `${originalName}-numbered.pdf`,
+      });
     } catch (error) {
       console.error("Error adding page numbers:", error);
       alert("An error occurred. Please try again.");
@@ -103,6 +110,8 @@ export default function PageNumbersPage() {
     { id: "bottom-center", label: "Bottom Center" },
     { id: "bottom-right", label: "Bottom Right" },
   ];
+
+  usePendingPdfImport(handleFileChange);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -142,7 +151,10 @@ export default function PageNumbersPage() {
                       {positions.map((pos) => (
                         <button
                           key={pos.id}
-                          onClick={() => setPosition(pos.id)}
+                          onClick={() => {
+                            setPosition(pos.id);
+                            setProcessedPdf(null);
+                          }}
                           className={`p-2 rounded-lg border text-xs font-medium transition-all ${
                             position === pos.id
                               ? "border-primary bg-primary/5 text-primary"
@@ -165,14 +177,20 @@ export default function PageNumbersPage() {
                         type="number"
                         min={1}
                         value={startNumber}
-                        onChange={(e) => setStartNumber(parseInt(e.target.value) || 1)}
+                        onChange={(e) => {
+                          setStartNumber(parseInt(e.target.value) || 1);
+                          setProcessedPdf(null);
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Format</Label>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => setFormat("number")}
+                          onClick={() => {
+                            setFormat("number");
+                            setProcessedPdf(null);
+                          }}
                           className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
                             format === "number"
                               ? "border-primary bg-primary/5"
@@ -182,7 +200,10 @@ export default function PageNumbersPage() {
                           1, 2, 3
                         </button>
                         <button
-                          onClick={() => setFormat("of")}
+                          onClick={() => {
+                            setFormat("of");
+                            setProcessedPdf(null);
+                          }}
                           className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
                             format === "of"
                               ? "border-primary bg-primary/5"
@@ -204,12 +225,17 @@ export default function PageNumbersPage() {
                     Adding Numbers...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Add Page Numbers
-                  </>
+                  "Add Page Numbers"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="page-numbers"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

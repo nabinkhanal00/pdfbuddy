@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { saveAs } from "file-saver";
-import { Lock, Download, Loader2, FileText, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import { Lock, Loader2, FileText, Eye, EyeOff, AlertTriangle } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { protectPdf } from "@/lib/browser/qpdf";
 
 export default function ProtectPDFPage() {
@@ -19,9 +20,13 @@ export default function ProtectPDFPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
+    setProcessedPdf(null);
     if (newFiles.length > 0) {
       try {
         const { PDFDocument } = await import("pdf-lib");
@@ -50,9 +55,11 @@ export default function ProtectPDFPage() {
         throw new Error(protectedPdf.stderr.join("\n") || "Protection failed.");
       }
 
-      const blob = new Blob([protectedPdf.outputBytes], { type: "application/pdf" });
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-protected.pdf`);
+      setProcessedPdf({
+        bytes: Uint8Array.from(protectedPdf.outputBytes),
+        fileName: `${originalName}-protected.pdf`,
+      });
     } catch (error) {
       console.error("Error protecting PDF:", error);
       alert("An error occurred. Please try again.");
@@ -63,6 +70,8 @@ export default function ProtectPDFPage() {
 
   const passwordsMatch = password === confirmPassword;
   const isValid = password.length >= 4 && passwordsMatch;
+
+  usePendingPdfImport(handleFileChange);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -103,7 +112,10 @@ export default function ProtectPDFPage() {
                         id="password"
                         type={showPassword ? "text" : "password"}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setProcessedPdf(null);
+                        }}
                         placeholder="Enter password (min 4 characters)"
                         className="pr-10"
                       />
@@ -127,7 +139,10 @@ export default function ProtectPDFPage() {
                       id="confirmPassword"
                       type={showPassword ? "text" : "password"}
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setProcessedPdf(null);
+                      }}
                       placeholder="Confirm your password"
                     />
                     {confirmPassword && !passwordsMatch && (
@@ -159,12 +174,18 @@ export default function ProtectPDFPage() {
                     Protecting...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Protect & Download
-                  </>
+                  "Protect PDF"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  allowedToolIds={["unlock"]}
+                  currentToolId="protect"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

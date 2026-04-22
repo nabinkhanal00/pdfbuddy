@@ -9,6 +9,7 @@ import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { getPdfJs, getTextItemString } from "@/lib/browser/pdfjs";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 
 export default function PDFToTextPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -20,6 +21,8 @@ export default function PDFToTextPage() {
     setFiles(newFiles);
     setExtractedText("");
   };
+
+  usePendingPdfImport(handleFileChange);
 
   const extractText = async () => {
     if (files.length === 0) return;

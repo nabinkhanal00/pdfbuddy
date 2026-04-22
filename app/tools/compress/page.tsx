@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { saveAs } from "file-saver";
-import { Minimize2, Download, Loader2, FileText, TrendingDown } from "lucide-react";
+import { Minimize2, Loader2, FileText, TrendingDown } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { compressPdf } from "@/lib/browser/qpdf";
 
 type CompressionLevel = "low" | "medium" | "high";
@@ -18,6 +19,9 @@ export default function CompressPDFPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>("medium");
   const [result, setResult] = useState<{ original: number; compressed: number } | null>(null);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
@@ -44,9 +48,11 @@ export default function CompressPDFPage() {
       const compressedSize = compressed.outputBytes.length;
       setResult({ original: originalSize, compressed: compressedSize });
 
-      const blob = new Blob([compressed.outputBytes], { type: "application/pdf" });
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-compressed.pdf`);
+      setProcessedPdf({
+        bytes: Uint8Array.from(compressed.outputBytes),
+        fileName: `${originalName}-compressed.pdf`,
+      });
     } catch (error) {
       console.error("Error compressing PDF:", error);
       alert("An error occurred while compressing the PDF. Please try again.");
@@ -54,6 +60,12 @@ export default function CompressPDFPage() {
       setIsProcessing(false);
     }
   };
+
+  usePendingPdfImport(async (incomingFiles) => {
+    setFiles(incomingFiles);
+    setResult(null);
+    setProcessedPdf(null);
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,6 +83,7 @@ export default function CompressPDFPage() {
             onFilesChange={(f) => {
               setFiles(f);
               setResult(null);
+              setProcessedPdf(null);
             }}
             maxFiles={1}
             multiple={false}
@@ -99,7 +112,11 @@ export default function CompressPDFPage() {
                     ].map((level) => (
                       <button
                         key={level.id}
-                        onClick={() => setCompressionLevel(level.id as CompressionLevel)}
+                        onClick={() => {
+                          setCompressionLevel(level.id as CompressionLevel);
+                          setProcessedPdf(null);
+                          setResult(null);
+                        }}
                         className={`p-3 rounded-lg border text-left transition-all ${
                           compressionLevel === level.id
                             ? "border-primary bg-primary/5"
@@ -153,7 +170,7 @@ export default function CompressPDFPage() {
                         <span className="font-semibold">
                           {formatFileSize(result.compressed - result.original)}
                         </span>
-                        . The optimized file was still downloaded for comparison.
+                        . You can still download it or send it into another step below.
                       </>
                     )}
                   </p>
@@ -172,12 +189,17 @@ export default function CompressPDFPage() {
                     Compressing...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Compress PDF
-                  </>
+                  "Compress PDF"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="compress"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

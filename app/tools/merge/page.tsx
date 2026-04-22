@@ -28,6 +28,7 @@ import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import type { QueuedFile } from "@/lib/browser/file-queue";
 import { reconcileQueuedFiles } from "@/lib/browser/file-queue";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { cn } from "@/lib/utils";
 
 interface SortableMergeFileRowProps {
@@ -111,6 +112,8 @@ export default function MergePDFPage() {
   const handleFilesChange = useCallback((nextFiles: File[]) => {
     setFiles((previousFiles) => reconcileQueuedFiles(nextFiles, previousFiles));
   }, []);
+
+  usePendingPdfImport(handleFilesChange);
 
   const moveFile = useCallback((index: number, direction: "up" | "down") => {
     setFiles((prev) => {

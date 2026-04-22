@@ -3,13 +3,14 @@
 import Image from "next/image";
 import { useState } from "react";
 import { PDFDocument } from "pdf-lib";
-import { saveAs } from "file-saver";
-import { Trash2, Download, Loader2, FileText, Check } from "lucide-react";
+import { Trash2, Loader2, FileText, Check } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { getPdfJs } from "@/lib/browser/pdfjs";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +20,15 @@ export default function RemovePagesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [pagePreviews, setPagePreviews] = useState<string[]>([]);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
     setSelectedPages(new Set());
     setPagePreviews([]);
+    setProcessedPdf(null);
 
     if (newFiles.length > 0) {
       try {
@@ -96,10 +101,12 @@ export default function RemovePagesPage() {
       const copiedPages = await newPdf.copyPages(pdf, pagesToKeep);
       copiedPages.forEach((page) => newPdf.addPage(page));
 
-      const pdfBytes = await newPdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const pdfBytes = new Uint8Array(await newPdf.save());
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-modified.pdf`);
+      setProcessedPdf({
+        bytes: pdfBytes,
+        fileName: `${originalName}-modified.pdf`,
+      });
     } catch (error) {
       console.error("Error removing pages:", error);
       alert("An error occurred. Please try again.");
@@ -107,6 +114,8 @@ export default function RemovePagesPage() {
       setIsProcessing(false);
     }
   };
+
+  usePendingPdfImport(handleFileChange);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -154,7 +163,10 @@ export default function RemovePagesPage() {
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                     <button
                       key={pageNum}
-                      onClick={() => togglePage(pageNum)}
+                      onClick={() => {
+                        togglePage(pageNum);
+                        setProcessedPdf(null);
+                      }}
                       className={cn(
                         "relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden",
                         selectedPages.has(pageNum)
@@ -209,14 +221,19 @@ export default function RemovePagesPage() {
                     Removing Pages...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    {selectedPages.size > 0
-                      ? `Remove ${selectedPages.size} Page${selectedPages.size !== 1 ? "s" : ""} & Download`
-                      : "Select Pages to Remove"}
-                  </>
+                  selectedPages.size > 0
+                    ? `Remove ${selectedPages.size} Page${selectedPages.size !== 1 ? "s" : ""}`
+                    : "Select Pages to Remove"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="remove-pages"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

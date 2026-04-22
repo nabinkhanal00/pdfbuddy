@@ -2,16 +2,17 @@
 
 import { useState } from "react";
 import { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
-import { saveAs } from "file-saver";
-import { Droplet, Download, Loader2, FileText } from "lucide-react";
+import { Droplet, Loader2, FileText } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 
 type WatermarkPosition = "center" | "diagonal" | "tiled";
 
@@ -23,9 +24,13 @@ export default function WatermarkPage() {
   const [opacity, setOpacity] = useState(30);
   const [fontSize, setFontSize] = useState(48);
   const [position, setPosition] = useState<WatermarkPosition>("diagonal");
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
+    setProcessedPdf(null);
     if (newFiles.length > 0) {
       try {
         const arrayBuffer = await newFiles[0].arrayBuffer();
@@ -94,10 +99,12 @@ export default function WatermarkPage() {
         }
       });
 
-      const pdfBytes = await pdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const pdfBytes = new Uint8Array(await pdf.save());
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-watermarked.pdf`);
+      setProcessedPdf({
+        bytes: pdfBytes,
+        fileName: `${originalName}-watermarked.pdf`,
+      });
     } catch (error) {
       console.error("Error adding watermark:", error);
       alert("An error occurred. Please try again.");
@@ -105,6 +112,8 @@ export default function WatermarkPage() {
       setIsProcessing(false);
     }
   };
+
+  usePendingPdfImport(handleFileChange);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -143,7 +152,10 @@ export default function WatermarkPage() {
                     <Input
                       id="watermarkText"
                       value={watermarkText}
-                      onChange={(e) => setWatermarkText(e.target.value)}
+                      onChange={(e) => {
+                        setWatermarkText(e.target.value);
+                        setProcessedPdf(null);
+                      }}
                       placeholder="Enter watermark text"
                     />
                   </div>
@@ -158,7 +170,10 @@ export default function WatermarkPage() {
                       ].map((p) => (
                         <button
                           key={p.id}
-                          onClick={() => setPosition(p.id as WatermarkPosition)}
+                          onClick={() => {
+                            setPosition(p.id as WatermarkPosition);
+                            setProcessedPdf(null);
+                          }}
                           className={`p-3 rounded-lg border text-sm font-medium transition-all ${
                             position === p.id
                               ? "border-primary bg-primary/5 text-primary"
@@ -178,7 +193,10 @@ export default function WatermarkPage() {
                     </div>
                     <Slider
                       value={[opacity]}
-                      onValueChange={(v) => setOpacity(v[0])}
+                      onValueChange={(v) => {
+                        setOpacity(v[0]);
+                        setProcessedPdf(null);
+                      }}
                       min={10}
                       max={100}
                       step={5}
@@ -192,7 +210,10 @@ export default function WatermarkPage() {
                     </div>
                     <Slider
                       value={[fontSize]}
-                      onValueChange={(v) => setFontSize(v[0])}
+                      onValueChange={(v) => {
+                        setFontSize(v[0]);
+                        setProcessedPdf(null);
+                      }}
                       min={12}
                       max={120}
                       step={4}
@@ -213,12 +234,17 @@ export default function WatermarkPage() {
                     Adding Watermark...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Add Watermark & Download
-                  </>
+                  "Add Watermark"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="watermark"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

@@ -20,10 +20,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PDFDocument } from "pdf-lib";
-import { saveAs } from "file-saver";
 import {
   ArrowRightLeft,
-  Download,
   Loader2,
   FileText,
   ArrowUp,
@@ -34,7 +32,9 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 import { getPdfJs } from "@/lib/browser/pdfjs";
 import { cn } from "@/lib/utils";
 
@@ -130,6 +130,9 @@ export default function ReorderPagesPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pages, setPages] = useState<PageItem[]>([]);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -144,6 +147,7 @@ export default function ReorderPagesPage() {
   const handleFileChange = useCallback(async (newFiles: File[]) => {
     setFiles(newFiles);
     setPages([]);
+    setProcessedPdf(null);
 
     if (newFiles.length > 0) {
       try {
@@ -202,6 +206,7 @@ export default function ReorderPagesPage() {
 
       return arrayMove(previousPages, index, nextIndex);
     });
+    setProcessedPdf(null);
   };
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -221,6 +226,7 @@ export default function ReorderPagesPage() {
 
       return arrayMove(previousPages, oldIndex, newIndex);
     });
+    setProcessedPdf(null);
   }, []);
 
   const reorderPDF = async () => {
@@ -238,10 +244,12 @@ export default function ReorderPagesPage() {
       const copiedPages = await newPdf.copyPages(pdf, newOrder);
       copiedPages.forEach((page) => newPdf.addPage(page));
 
-      const pdfBytes = await newPdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const pdfBytes = new Uint8Array(await newPdf.save());
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-reordered.pdf`);
+      setProcessedPdf({
+        bytes: pdfBytes,
+        fileName: `${originalName}-reordered.pdf`,
+      });
     } catch (error) {
       console.error("Error reordering PDF:", error);
       alert("An error occurred. Please try again.");
@@ -249,6 +257,8 @@ export default function ReorderPagesPage() {
       setIsProcessing(false);
     }
   };
+
+  usePendingPdfImport(handleFileChange);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -309,12 +319,17 @@ export default function ReorderPagesPage() {
                     Reordering...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Save Reordered PDF
-                  </>
+                  "Apply Page Order"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="reorder"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

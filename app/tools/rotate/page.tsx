@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
-import { saveAs } from "file-saver";
-import { RotateCw, Download, Loader2, FileText, RotateCcw } from "lucide-react";
+import { RotateCw, Loader2, FileText, RotateCcw } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
+import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 
 type RotationAngle = 90 | 180 | 270;
 
@@ -17,9 +18,13 @@ export default function RotatePDFPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [rotation, setRotation] = useState<RotationAngle>(90);
   const [totalPages, setTotalPages] = useState(0);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
+    setProcessedPdf(null);
     if (newFiles.length > 0) {
       try {
         const arrayBuffer = await newFiles[0].arrayBuffer();
@@ -32,6 +37,8 @@ export default function RotatePDFPage() {
       setTotalPages(0);
     }
   };
+
+  usePendingPdfImport(handleFileChange);
 
   const rotatePDF = async () => {
     if (files.length === 0) return;
@@ -49,10 +56,12 @@ export default function RotatePDFPage() {
         page.setRotation(degrees(currentRotation + rotation));
       });
 
-      const rotatedBytes = await pdf.save();
-      const blob = new Blob([rotatedBytes], { type: "application/pdf" });
+      const rotatedBytes = new Uint8Array(await pdf.save());
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(blob, `${originalName}-rotated.pdf`);
+      setProcessedPdf({
+        bytes: rotatedBytes,
+        fileName: `${originalName}-rotated.pdf`,
+      });
     } catch (error) {
       console.error("Error rotating PDF:", error);
       alert("An error occurred while rotating the PDF. Please try again.");
@@ -104,7 +113,10 @@ export default function RotatePDFPage() {
                       return (
                         <button
                           key={option.angle}
-                          onClick={() => setRotation(option.angle as RotationAngle)}
+                          onClick={() => {
+                            setRotation(option.angle as RotationAngle);
+                            setProcessedPdf(null);
+                          }}
                           className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-all ${
                             rotation === option.angle
                               ? "border-primary bg-primary/5"
@@ -138,12 +150,17 @@ export default function RotatePDFPage() {
                     Rotating...
                   </>
                 ) : (
-                  <>
-                    <Download className="h-4 w-4 mr-2" />
-                    Rotate & Download
-                  </>
+                  "Apply Rotation"
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="rotate"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>
