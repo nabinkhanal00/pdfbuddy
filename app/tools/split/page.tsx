@@ -9,6 +9,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +23,13 @@ export default function SplitPDFPage() {
   const [splitMode, setSplitMode] = useState<SplitMode>("range");
   const [pageRange, setPageRange] = useState("");
   const [totalPages, setTotalPages] = useState(0);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
+    setProcessedPdf(null);
     if (newFiles.length > 0) {
       try {
         const arrayBuffer = await newFiles[0].arrayBuffer();
@@ -67,6 +72,7 @@ export default function SplitPDFPage() {
     if (files.length === 0) return;
 
     setIsProcessing(true);
+    setProcessedPdf(null);
 
     try {
       const file = files[0];
@@ -87,8 +93,10 @@ export default function SplitPDFPage() {
         copiedPages.forEach((page) => newPdf.addPage(page));
 
         const pdfBytes = await newPdf.save();
-        const blob = new Blob([pdfBytes], { type: "application/pdf" });
-        saveAs(blob, `extracted-pages.pdf`);
+        setProcessedPdf({
+          bytes: pdfBytes,
+          fileName: `extracted-pages.pdf`,
+        });
       } else if (splitMode === "every") {
         const zip = new JSZip();
 
@@ -101,7 +109,11 @@ export default function SplitPDFPage() {
         }
 
         const zipBlob = await zip.generateAsync({ type: "blob" });
-        saveAs(zipBlob, "split-pages.zip");
+        const arrayBuffer = await zipBlob.arrayBuffer();
+        setProcessedPdf({
+          bytes: new Uint8Array(arrayBuffer),
+          fileName: "split-pages.zip",
+        });
       }
     } catch (error) {
       console.error("Error splitting PDF:", error);
@@ -206,6 +218,15 @@ export default function SplitPDFPage() {
                   </>
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="split"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                  mimeType={processedPdf.fileName.endsWith(".zip") ? "application/zip" : "application/pdf"}
+                />
+              )}
             </div>
           )}
         </div>

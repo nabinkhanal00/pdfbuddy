@@ -8,6 +8,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
@@ -21,9 +22,13 @@ export default function PDFToImagePage() {
   const [progress, setProgress] = useState(0);
   const [format, setFormat] = useState<ImageFormat>("png");
   const [totalPages, setTotalPages] = useState(0);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
+    setProcessedPdf(null);
     if (newFiles.length > 0) {
       try {
         const pdfjsLib = await getPdfJs();
@@ -45,6 +50,7 @@ export default function PDFToImagePage() {
 
     setIsProcessing(true);
     setProgress(0);
+    setProcessedPdf(null);
 
     try {
       const pdfjsLib = await getPdfJs();
@@ -85,7 +91,11 @@ export default function PDFToImagePage() {
 
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const originalName = file.name.replace(/\.pdf$/i, "");
-      saveAs(zipBlob, `${originalName}-images.zip`);
+      const arrayBuffer = await zipBlob.arrayBuffer();
+      setProcessedPdf({
+        bytes: new Uint8Array(arrayBuffer),
+        fileName: `${originalName}-images.zip`,
+      });
     } catch (error) {
       console.error("Error converting PDF to images:", error);
       alert("An error occurred while converting the PDF. Please try again.");
@@ -187,6 +197,15 @@ export default function PDFToImagePage() {
                   </>
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="pdf-to-image"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                  mimeType="application/zip"
+                />
+              )}
             </div>
           )}
         </div>

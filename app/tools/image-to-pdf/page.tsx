@@ -26,6 +26,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import type { QueuedFile } from "@/lib/browser/file-queue";
 import { reconcileQueuedFiles } from "@/lib/browser/file-queue";
@@ -109,6 +110,9 @@ export default function ImageToPDFPage() {
   const [files, setFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const previewsRef = useRef<Record<string, string>>({});
 
@@ -130,6 +134,7 @@ export default function ImageToPDFPage() {
   }, []);
 
   const handleFileChange = useCallback((newFiles: File[]) => {
+    setProcessedPdf(null);
     setFiles((previousFiles) => {
       const nextFiles = reconcileQueuedFiles(newFiles, previousFiles);
       const nextIds = new Set(nextFiles.map((file) => file.id));
@@ -195,6 +200,7 @@ export default function ImageToPDFPage() {
 
     setIsProcessing(true);
     setProgress(0);
+    setProcessedPdf(null);
 
     try {
       const pdf = await PDFDocument.create();
@@ -237,8 +243,10 @@ export default function ImageToPDFPage() {
       }
 
       const pdfBytes = await pdf.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      saveAs(blob, "images-to-pdf.pdf");
+      setProcessedPdf({
+        bytes: pdfBytes,
+        fileName: "images-to-pdf.pdf",
+      });
     } catch (error) {
       console.error("Error converting images to PDF:", error);
       alert("An error occurred while converting images. Please try again.");
@@ -329,6 +337,14 @@ export default function ImageToPDFPage() {
                   </>
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="image-to-pdf"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

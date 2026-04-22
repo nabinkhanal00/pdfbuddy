@@ -6,6 +6,7 @@ import { AlertCircle, Download, FileType, Globe, Loader2, Server } from "lucide-
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,9 @@ export default function HTMLToPDFPage() {
   const [inputMode, setInputMode] = useState<InputMode>("html");
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
   const [htmlContent, setHtmlContent] = useState(`<!DOCTYPE html>
 <html>
 <head>
@@ -79,7 +83,11 @@ export default function HTMLToPDFPage() {
             })()
           : "document.pdf";
 
-      saveAs(blob, filename);
+      const arrayBuffer = await blob.arrayBuffer();
+      setProcessedPdf({
+        bytes: new Uint8Array(arrayBuffer),
+        fileName: filename,
+      });
     } catch (error) {
       console.error("Error converting to PDF:", error);
       setError(
@@ -214,6 +222,14 @@ export default function HTMLToPDFPage() {
               </>
             )}
           </Button>
+
+          {processedPdf && (
+            <ProcessedPdfActions
+              currentToolId="html-to-pdf"
+              fileName={processedPdf.fileName}
+              outputBytes={processedPdf.bytes}
+            />
+          )}
         </div>
       </ToolLayout>
       <Footer />

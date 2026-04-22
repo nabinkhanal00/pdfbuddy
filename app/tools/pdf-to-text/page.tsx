@@ -10,6 +10,7 @@ import { FileDropzone } from "@/components/file-dropzone";
 import { Button } from "@/components/ui/button";
 import { getPdfJs, getTextItemString } from "@/lib/browser/pdfjs";
 import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 
 export default function PDFToTextPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -133,14 +134,6 @@ export default function PDFToTextPage() {
                       </>
                     )}
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={downloadAsText}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download .txt
-                  </Button>
                 </div>
               </div>
               <div className="rounded-lg border border-border bg-muted/50 p-4 max-h-96 overflow-y-auto">
@@ -148,6 +141,13 @@ export default function PDFToTextPage() {
                   {extractedText}
                 </pre>
               </div>
+
+              <ProcessedPdfActions
+                fileName={files[0].name.replace(/\.pdf$/i, "") + ".txt"}
+                outputBytes={new TextEncoder().encode(extractedText)}
+                mimeType="text/plain"
+                hideProcessFurther
+              />
             </div>
           )}
         </div>

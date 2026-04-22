@@ -25,6 +25,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
 import { FileDropzone } from "@/components/file-dropzone";
+import { ProcessedPdfActions } from "@/components/processed-pdf-actions";
 import { Button } from "@/components/ui/button";
 import type { QueuedFile } from "@/lib/browser/file-queue";
 import { reconcileQueuedFiles } from "@/lib/browser/file-queue";
@@ -97,6 +98,9 @@ export default function MergePDFPage() {
   const [files, setFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
+    null
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -111,6 +115,7 @@ export default function MergePDFPage() {
 
   const handleFilesChange = useCallback((nextFiles: File[]) => {
     setFiles((previousFiles) => reconcileQueuedFiles(nextFiles, previousFiles));
+    setProcessedPdf(null);
   }, []);
 
   usePendingPdfImport(handleFilesChange);
@@ -148,6 +153,7 @@ export default function MergePDFPage() {
 
     setIsProcessing(true);
     setProgress(0);
+    setProcessedPdf(null);
 
     try {
       const mergedPdf = await PDFDocument.create();
@@ -162,8 +168,10 @@ export default function MergePDFPage() {
       }
 
       const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-      saveAs(blob, "merged.pdf");
+      setProcessedPdf({
+        bytes: mergedPdfBytes,
+        fileName: "merged.pdf",
+      });
     } catch (error) {
       console.error("Error merging PDFs:", error);
       alert("An error occurred while merging PDFs. Please try again.");
@@ -249,6 +257,14 @@ export default function MergePDFPage() {
                   </>
                 )}
               </Button>
+
+              {processedPdf && (
+                <ProcessedPdfActions
+                  currentToolId="merge"
+                  fileName={processedPdf.fileName}
+                  outputBytes={processedPdf.bytes}
+                />
+              )}
             </div>
           )}
         </div>

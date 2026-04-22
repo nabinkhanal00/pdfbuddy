@@ -21,6 +21,8 @@ interface ProcessedPdfActionsProps {
   currentToolId?: string;
   fileName: string;
   outputBytes: Uint8Array;
+  mimeType?: string;
+  hideProcessFurther?: boolean;
 }
 
 export function ProcessedPdfActions({
@@ -28,6 +30,8 @@ export function ProcessedPdfActions({
   currentToolId,
   fileName,
   outputBytes,
+  mimeType = "application/pdf",
+  hideProcessFurther = false,
 }: ProcessedPdfActionsProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,7 +53,7 @@ export function ProcessedPdfActions({
   }, [allowedToolIds, currentToolId]);
 
   const downloadPdf = () => {
-    const blob = new Blob([outputBytes], { type: "application/pdf" });
+    const blob = new Blob([outputBytes], { type: mimeType });
     saveAs(blob, fileName);
   };
 
@@ -82,19 +86,23 @@ export function ProcessedPdfActions({
         <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
         <div className="space-y-4">
           <div className="space-y-1">
-            <p className="font-medium text-emerald-900">Processed PDF ready</p>
+            <p className="font-medium text-emerald-900">
+              {mimeType === "application/pdf" ? "Processed PDF ready" : "Processing complete"}
+            </p>
             <p className="text-sm text-emerald-800">
-              Download it now or send it straight into another PDF tool without uploading again.
+              {mimeType === "application/pdf"
+                ? "Download it now or send it straight into another PDF tool without uploading again."
+                : "Your file is ready for download."}
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button onClick={downloadPdf} className="sm:flex-1">
               <Download className="mr-2 h-4 w-4" />
-              Download PDF
+              {mimeType.includes("zip") ? "Download ZIP" : "Download File"}
             </Button>
 
-            {availableTools.length > 0 && (
+            {!hideProcessFurther && mimeType === "application/pdf" && availableTools.length > 0 && (
               <Button
                 variant="outline"
                 onClick={() => setDialogOpen(true)}
