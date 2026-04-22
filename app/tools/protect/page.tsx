@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Lock, Loader2, FileText, Eye, EyeOff, AlertTriangle } from "lucide-react";
+import {
+  Lock,
+  Loader2,
+  FileText,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+} from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
@@ -20,9 +27,10 @@ export default function ProtectPDFPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [totalPages, setTotalPages] = useState(0);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -49,7 +57,10 @@ export default function ProtectPDFPage() {
     try {
       const file = files[0];
       const arrayBuffer = await file.arrayBuffer();
-      const protectedPdf = await protectPdf(new Uint8Array(arrayBuffer), password);
+      const protectedPdf = await protectPdf(
+        new Uint8Array(arrayBuffer),
+        password,
+      );
 
       if (!protectedPdf.outputBytes) {
         throw new Error(protectedPdf.stderr.join("\n") || "Protection failed.");
@@ -98,7 +109,9 @@ export default function ProtectPDFPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-6">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     ({totalPages} page{totalPages !== 1 ? "s" : ""})
                   </span>
@@ -146,16 +159,21 @@ export default function ProtectPDFPage() {
                       placeholder="Confirm your password"
                     />
                     {confirmPassword && !passwordsMatch && (
-                      <p className="text-sm text-destructive">Passwords do not match</p>
+                      <p className="text-sm text-destructive">
+                        Passwords do not match
+                      </p>
                     )}
                   </div>
 
                   <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
                     <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="text-sm">
-                      <p className="font-medium text-amber-800">Remember your password</p>
+                      <p className="font-medium text-amber-800">
+                        Remember your password
+                      </p>
                       <p className="text-amber-700 mt-1">
-                        If you forget the password, the protected document cannot be opened.
+                        If you forget the password, the protected document
+                        cannot be opened.
                       </p>
                     </div>
                   </div>

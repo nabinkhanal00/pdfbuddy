@@ -20,7 +20,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
-import { FileStack, Download, Loader2, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  FileStack,
+  Download,
+  Loader2,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
@@ -39,8 +46,20 @@ interface SortableMergeFileRowProps {
   total: number;
 }
 
-function SortableMergeFileRow({ file, index, onMove, total }: SortableMergeFileRowProps) {
-  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+function SortableMergeFileRow({
+  file,
+  index,
+  onMove,
+  total,
+}: SortableMergeFileRowProps) {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
     id: file.id,
   });
 
@@ -54,7 +73,7 @@ function SortableMergeFileRow({ file, index, onMove, total }: SortableMergeFileR
       className={cn(
         "flex items-center gap-3 rounded-lg bg-muted/50 p-3 transition-colors",
         "hover:bg-muted",
-        isDragging && "bg-card shadow-lg ring-1 ring-border"
+        isDragging && "bg-card shadow-lg ring-1 ring-border",
       )}
     >
       <button
@@ -69,7 +88,9 @@ function SortableMergeFileRow({ file, index, onMove, total }: SortableMergeFileR
       <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-xs font-medium text-primary">
         {index + 1}
       </span>
-      <span className="flex-1 truncate text-sm font-medium text-foreground">{file.file.name}</span>
+      <span className="flex-1 truncate text-sm font-medium text-foreground">
+        {file.file.name}
+      </span>
       <div className="flex items-center gap-1">
         <Button
           variant="ghost"
@@ -98,9 +119,10 @@ export default function MergePDFPage() {
   const [files, setFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -110,7 +132,7 @@ export default function MergePDFPage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleFilesChange = useCallback((nextFiles: File[]) => {
@@ -162,7 +184,10 @@ export default function MergePDFPage() {
         const file = files[i].file;
         const arrayBuffer = await file.arrayBuffer();
         const pdf = await PDFDocument.load(arrayBuffer);
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        const copiedPages = await mergedPdf.copyPages(
+          pdf,
+          pdf.getPageIndices(),
+        );
         copiedPages.forEach((page) => mergedPdf.addPage(page));
         setProgress(((i + 1) / files.length) * 100);
       }
@@ -208,8 +233,15 @@ export default function MergePDFPage() {
                   Drag the handle or use the arrows to reorder
                 </p>
               </div>
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={files.map((file) => file.id)} strategy={verticalListSortingStrategy}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={files.map((file) => file.id)}
+                  strategy={verticalListSortingStrategy}
+                >
                   <div className="space-y-2 rounded-lg border border-border bg-card p-4">
                     {files.map((file, index) => (
                       <SortableMergeFileRow
@@ -227,8 +259,12 @@ export default function MergePDFPage() {
               {isProcessing && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Merging PDFs...</span>
-                    <span className="text-foreground font-medium">{Math.round(progress)}%</span>
+                    <span className="text-muted-foreground">
+                      Merging PDFs...
+                    </span>
+                    <span className="text-foreground font-medium">
+                      {Math.round(progress)}%
+                    </span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
                     <div

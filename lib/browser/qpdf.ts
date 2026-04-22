@@ -23,7 +23,9 @@ interface QpdfInstance {
   callMain: (args: string[]) => number;
 }
 
-type QpdfFactory = (moduleArg?: { locateFile?: (path: string) => string }) => Promise<QpdfInstance>;
+type QpdfFactory = (moduleArg?: {
+  locateFile?: (path: string) => string;
+}) => Promise<QpdfInstance>;
 
 declare global {
   interface Window {
@@ -46,7 +48,9 @@ function loadQpdfFactory() {
 
   if (!qpdfFactoryPromise) {
     qpdfFactoryPromise = new Promise<QpdfFactory>((resolve, reject) => {
-      const existingScript = document.querySelector<HTMLScriptElement>('script[data-qpdf-loader="true"]');
+      const existingScript = document.querySelector<HTMLScriptElement>(
+        'script[data-qpdf-loader="true"]',
+      );
 
       const handleLoad = () => {
         if (window.Module) {
@@ -54,7 +58,11 @@ function loadQpdfFactory() {
           return;
         }
 
-        reject(new Error("QPDF script loaded, but no factory was exposed on window.Module."));
+        reject(
+          new Error(
+            "QPDF script loaded, but no factory was exposed on window.Module.",
+          ),
+        );
       };
 
       const handleError = () => {
@@ -111,7 +119,7 @@ async function runQpdf(
   buildArgs: (paths: { input: string; output: string }) => string[],
   options: {
     expectsOutput?: boolean;
-  } = {}
+  } = {},
 ) {
   const qpdf = await getQpdf();
   const fs = qpdf.FS;
@@ -154,7 +162,9 @@ async function runQpdf(
 
 function createOwnerPassword() {
   const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }
 
 function hasInvalidPasswordError(stderr: string[]) {
@@ -166,9 +176,13 @@ function isNotEncryptedMessage(stderr: string[]) {
 }
 
 export async function inspectPdfEncryption(inputBytes: Uint8Array) {
-  const inspection = await runQpdf(inputBytes, ({ input }) => [input, "--show-encryption"], {
-    expectsOutput: false,
-  });
+  const inspection = await runQpdf(
+    inputBytes,
+    ({ input }) => [input, "--show-encryption"],
+    {
+      expectsOutput: false,
+    },
+  );
 
   if (isNotEncryptedMessage(inspection.stderr)) {
     return {
@@ -210,7 +224,7 @@ export async function unlockPdf(inputBytes: Uint8Array, password: string) {
         : [input, "--show-encryption"],
     {
       expectsOutput: false,
-    }
+    },
   );
 
   const hasValidPassword =
@@ -264,6 +278,13 @@ function getCompressionArgs(level: CompressionLevel) {
   ];
 }
 
-export async function compressPdf(inputBytes: Uint8Array, level: CompressionLevel) {
-  return runQpdf(inputBytes, ({ input, output }) => [input, ...getCompressionArgs(level), output]);
+export async function compressPdf(
+  inputBytes: Uint8Array,
+  level: CompressionLevel,
+) {
+  return runQpdf(inputBytes, ({ input, output }) => [
+    input,
+    ...getCompressionArgs(level),
+    output,
+  ]);
 }

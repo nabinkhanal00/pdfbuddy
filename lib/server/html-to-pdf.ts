@@ -32,13 +32,19 @@ const LOCAL_BROWSER_HINTS = [
 ].filter((value): value is string => Boolean(value));
 
 function shouldUseServerlessBrowser() {
-  return Boolean(process.env.VERCEL || process.env.AWS_REGION || process.env.AWS_EXECUTION_ENV);
+  return Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_REGION ||
+    process.env.AWS_EXECUTION_ENV,
+  );
 }
 
 async function launchLocalBrowser() {
   const puppeteer = await import("puppeteer");
 
-  let executablePath = LOCAL_BROWSER_HINTS.find((candidate) => existsSync(candidate));
+  let executablePath = LOCAL_BROWSER_HINTS.find((candidate) =>
+    existsSync(candidate),
+  );
 
   if (!executablePath) {
     try {
@@ -66,7 +72,9 @@ async function launchServerlessBrowser(requestOrigin: string) {
 
   chromium.setGraphicsMode = false;
 
-  const executablePath = await chromium.executablePath(`${requestOrigin}/chromium-pack.tar`);
+  const executablePath = await chromium.executablePath(
+    `${requestOrigin}/chromium-pack.tar`,
+  );
 
   return puppeteer.launch({
     args: puppeteer.defaultArgs({

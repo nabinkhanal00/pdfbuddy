@@ -74,7 +74,7 @@ export function ProcessedPdfActions({
       setHandoffError(
         error instanceof Error
           ? error.message
-          : "Could not pass the processed PDF into the next tool."
+          : "Could not pass the processed PDF into the next tool.",
       );
       setIsRouting(false);
     }
@@ -87,7 +87,9 @@ export function ProcessedPdfActions({
         <div className="space-y-4">
           <div className="space-y-1">
             <p className="font-medium text-emerald-900">
-              {mimeType === "application/pdf" ? "Processed PDF ready" : "Processing complete"}
+              {mimeType === "application/pdf"
+                ? "Processed PDF ready"
+                : "Processing complete"}
             </p>
             <p className="text-sm text-emerald-800">
               {mimeType === "application/pdf"
@@ -102,19 +104,23 @@ export function ProcessedPdfActions({
               {mimeType.includes("zip") ? "Download ZIP" : "Download File"}
             </Button>
 
-            {!hideProcessFurther && mimeType === "application/pdf" && availableTools.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => setDialogOpen(true)}
-                className="border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100 sm:flex-1"
-              >
-                <ArrowRight className="mr-2 h-4 w-4" />
-                Process Further
-              </Button>
-            )}
+            {!hideProcessFurther &&
+              mimeType === "application/pdf" &&
+              availableTools.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setDialogOpen(true)}
+                  className="border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100 sm:flex-1"
+                >
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                  Process Further
+                </Button>
+              )}
           </div>
 
-          {handoffError && <p className="text-sm text-destructive">{handoffError}</p>}
+          {handoffError && (
+            <p className="text-sm text-destructive">{handoffError}</p>
+          )}
         </div>
       </div>
 
@@ -130,9 +136,11 @@ export function ProcessedPdfActions({
           <div className="grid gap-3">
             {availableTools.map((tool) => {
               const Icon = tool.icon;
-              const iconBackground = tool.bgColor
-                .split(" ")
-                .find((className) => className.startsWith("bg-")) ?? "bg-muted";
+              const iconBackground =
+                tool.bgColor
+                  .split(" ")
+                  .find((className) => className.startsWith("bg-")) ??
+                "bg-muted";
 
               return (
                 <button
@@ -147,9 +155,13 @@ export function ProcessedPdfActions({
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground">{tool.name}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{tool.description}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {tool.description}
+                    </p>
                   </div>
-                  {isRouting && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {isRouting && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
                 </button>
               );
             })}

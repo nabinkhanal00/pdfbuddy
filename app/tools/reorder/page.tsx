@@ -51,8 +51,20 @@ interface SortablePageCardProps {
   total: number;
 }
 
-function SortablePageCard({ index, onMove, page, total }: SortablePageCardProps) {
-  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+function SortablePageCard({
+  index,
+  onMove,
+  page,
+  total,
+}: SortablePageCardProps) {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
     id: page.id,
   });
 
@@ -79,7 +91,7 @@ function SortablePageCard({ index, onMove, page, total }: SortablePageCardProps)
       <div
         className={cn(
           "aspect-[3/4] rounded-lg border-2 border-border overflow-hidden bg-muted",
-          isDragging && "shadow-xl"
+          isDragging && "shadow-xl",
         )}
       >
         {page.preview ? (
@@ -95,7 +107,9 @@ function SortablePageCard({ index, onMove, page, total }: SortablePageCardProps)
           </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <span className="text-sm text-muted-foreground">Page {page.originalIndex + 1}</span>
+            <span className="text-sm text-muted-foreground">
+              Page {page.originalIndex + 1}
+            </span>
           </div>
         )}
       </div>
@@ -130,9 +144,10 @@ export default function ReorderPagesPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pages, setPages] = useState<PageItem[]>([]);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -141,7 +156,7 @@ export default function ReorderPagesPage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleFileChange = useCallback(async (newFiles: File[]) => {
@@ -285,7 +300,9 @@ export default function ReorderPagesPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     ({pages.length} page{pages.length !== 1 ? "s" : ""})
                   </span>
@@ -295,8 +312,15 @@ export default function ReorderPagesPage() {
                   Drag the handle or use the arrows to reorder pages
                 </p>
 
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={pages.map((page) => page.id)} strategy={rectSortingStrategy}>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={pages.map((page) => page.id)}
+                    strategy={rectSortingStrategy}
+                  >
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 max-h-[500px] overflow-y-auto p-1">
                       {pages.map((page, index) => (
                         <SortablePageCard
@@ -312,7 +336,12 @@ export default function ReorderPagesPage() {
                 </DndContext>
               </div>
 
-              <Button onClick={reorderPDF} disabled={isProcessing} className="w-full" size="lg">
+              <Button
+                onClick={reorderPDF}
+                disabled={isProcessing}
+                className="w-full"
+                size="lg"
+              >
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

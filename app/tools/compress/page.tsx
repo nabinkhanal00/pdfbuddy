@@ -17,11 +17,16 @@ type CompressionLevel = "low" | "medium" | "high";
 export default function CompressPDFPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [compressionLevel, setCompressionLevel] = useState<CompressionLevel>("medium");
-  const [result, setResult] = useState<{ original: number; compressed: number } | null>(null);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [compressionLevel, setCompressionLevel] =
+    useState<CompressionLevel>("medium");
+  const [result, setResult] = useState<{
+    original: number;
+    compressed: number;
+  } | null>(null);
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
@@ -39,7 +44,10 @@ export default function CompressPDFPage() {
       const file = files[0];
       const originalSize = file.size;
       const arrayBuffer = await file.arrayBuffer();
-      const compressed = await compressPdf(new Uint8Array(arrayBuffer), compressionLevel);
+      const compressed = await compressPdf(
+        new Uint8Array(arrayBuffer),
+        compressionLevel,
+      );
 
       if (!compressed.outputBytes) {
         throw new Error(compressed.stderr.join("\n") || "Compression failed.");
@@ -96,14 +104,18 @@ export default function CompressPDFPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     ({formatFileSize(files[0].size)})
                   </span>
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-sm font-medium">Compression Level</Label>
+                  <Label className="text-sm font-medium">
+                    Compression Level
+                  </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
                       { id: "low", label: "Low", desc: "Best quality" },
@@ -139,7 +151,9 @@ export default function CompressPDFPage() {
                 <div className="p-4 rounded-lg border border-green-200 bg-green-50">
                   <div className="flex items-center gap-3 mb-3">
                     <TrendingDown className="h-5 w-5 text-green-600" />
-                    <span className="font-medium text-green-800">Compression Complete</span>
+                    <span className="font-medium text-green-800">
+                      Compression Complete
+                    </span>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -160,7 +174,12 @@ export default function CompressPDFPage() {
                       <>
                         Saved{" "}
                         <span className="font-semibold">
-                          {(((result.original - result.compressed) / result.original) * 100).toFixed(1)}%
+                          {(
+                            ((result.original - result.compressed) /
+                              result.original) *
+                            100
+                          ).toFixed(1)}
+                          %
                         </span>{" "}
                         ({formatFileSize(result.original - result.compressed)})
                       </>
@@ -170,7 +189,8 @@ export default function CompressPDFPage() {
                         <span className="font-semibold">
                           {formatFileSize(result.compressed - result.original)}
                         </span>
-                        . You can still download it or send it into another step below.
+                        . You can still download it or send it into another step
+                        below.
                       </>
                     )}
                   </p>

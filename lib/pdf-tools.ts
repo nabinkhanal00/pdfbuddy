@@ -175,10 +175,26 @@ export const pdfTools: PDFTool[] = [
 ];
 
 export const categories = [
-  { id: "organize", name: "Organize PDF", description: "Merge, split, and arrange your PDF pages" },
-  { id: "convert", name: "Convert PDF", description: "Transform PDFs to and from other formats" },
-  { id: "edit", name: "Edit PDF", description: "Compress, add watermarks, and modify PDFs" },
-  { id: "security", name: "PDF Security", description: "Protect and unlock PDF documents" },
+  {
+    id: "organize",
+    name: "Organize PDF",
+    description: "Merge, split, and arrange your PDF pages",
+  },
+  {
+    id: "convert",
+    name: "Convert PDF",
+    description: "Transform PDFs to and from other formats",
+  },
+  {
+    id: "edit",
+    name: "Edit PDF",
+    description: "Compress, add watermarks, and modify PDFs",
+  },
+  {
+    id: "security",
+    name: "PDF Security",
+    description: "Protect and unlock PDF documents",
+  },
 ];
 
 const pdfHandoffTargetIds = new Set([
@@ -196,4 +212,6 @@ const pdfHandoffTargetIds = new Set([
   "unlock",
 ]);
 
-export const pdfHandoffTargets = pdfTools.filter((tool) => pdfHandoffTargetIds.has(tool.id));
+export const pdfHandoffTargets = pdfTools.filter((tool) =>
+  pdfHandoffTargetIds.has(tool.id),
+);

@@ -36,9 +36,9 @@ export default function PDFToTextPage() {
       const file = files[0];
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      
+
       let fullText = "";
-      
+
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
@@ -66,7 +66,9 @@ export default function PDFToTextPage() {
   };
 
   const downloadAsText = () => {
-    const blob = new Blob([extractedText], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([extractedText], {
+      type: "text/plain;charset=utf-8",
+    });
     const originalName = files[0].name.replace(/\.pdf$/i, "");
     saveAs(blob, `${originalName}.txt`);
   };
@@ -117,11 +119,7 @@ export default function PDFToTextPage() {
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-foreground">Extracted Text</h3>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={copyToClipboard}
-                  >
+                  <Button variant="outline" size="sm" onClick={copyToClipboard}>
                     {copied ? (
                       <>
                         <Check className="h-4 w-4 mr-2" />

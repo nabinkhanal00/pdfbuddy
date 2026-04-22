@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Unlock, Loader2, FileText, Eye, EyeOff, CheckCircle } from "lucide-react";
+import {
+  Unlock,
+  Loader2,
+  FileText,
+  Eye,
+  EyeOff,
+  CheckCircle,
+} from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
@@ -21,9 +28,10 @@ export default function UnlockPDFPage() {
   const [isEncrypted, setIsEncrypted] = useState<boolean | null>(null);
   const [unlockAttempted, setUnlockAttempted] = useState(false);
   const [unlockSuccess, setUnlockSuccess] = useState(false);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -57,7 +65,9 @@ export default function UnlockPDFPage() {
 
       if (!unlocked.passwordAccepted || !unlocked.outputBytes) {
         setUnlockSuccess(false);
-        alert("Could not unlock the PDF. Please check the password and try again.");
+        alert(
+          "Could not unlock the PDF. Please check the password and try again.",
+        );
         return;
       }
 
@@ -66,12 +76,14 @@ export default function UnlockPDFPage() {
         bytes: Uint8Array.from(unlocked.outputBytes),
         fileName: `${originalName}-unlocked.pdf`,
       });
-      
+
       setUnlockSuccess(true);
     } catch (error) {
       console.error("Error unlocking PDF:", error);
       setUnlockSuccess(false);
-      alert("Could not unlock the PDF. Please check the password and try again.");
+      alert(
+        "Could not unlock the PDF. Please check the password and try again.",
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -104,7 +116,9 @@ export default function UnlockPDFPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                 </div>
 
                 {isEncrypted === false && (

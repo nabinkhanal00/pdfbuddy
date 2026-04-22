@@ -24,9 +24,10 @@ export default function WatermarkPage() {
   const [opacity, setOpacity] = useState(30);
   const [fontSize, setFontSize] = useState(48);
   const [position, setPosition] = useState<WatermarkPosition>("diagonal");
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -140,7 +141,9 @@ export default function WatermarkPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-6">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     ({totalPages} page{totalPages !== 1 ? "s" : ""})
                   </span>
@@ -189,7 +192,9 @@ export default function WatermarkPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <Label>Opacity</Label>
-                      <span className="text-sm text-muted-foreground">{opacity}%</span>
+                      <span className="text-sm text-muted-foreground">
+                        {opacity}%
+                      </span>
                     </div>
                     <Slider
                       value={[opacity]}
@@ -206,7 +211,9 @@ export default function WatermarkPage() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <Label>Font Size</Label>
-                      <span className="text-sm text-muted-foreground">{fontSize}px</span>
+                      <span className="text-sm text-muted-foreground">
+                        {fontSize}px
+                      </span>
                     </div>
                     <Slider
                       value={[fontSize]}

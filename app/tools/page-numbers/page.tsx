@@ -13,7 +13,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { usePendingPdfImport } from "@/lib/browser/pdf-handoff";
 
-type Position = "bottom-center" | "bottom-left" | "bottom-right" | "top-center" | "top-left" | "top-right";
+type Position =
+  | "bottom-center"
+  | "bottom-left"
+  | "bottom-right"
+  | "top-center"
+  | "top-left"
+  | "top-right";
 
 export default function PageNumbersPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -22,9 +28,10 @@ export default function PageNumbersPage() {
   const [position, setPosition] = useState<Position>("bottom-center");
   const [startNumber, setStartNumber] = useState(1);
   const [format, setFormat] = useState<"number" | "of">("number");
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -56,7 +63,8 @@ export default function PageNumbersPage() {
 
       pages.forEach((page, index) => {
         const pageNum = index + startNumber;
-        const text = format === "number" ? `${pageNum}` : `${pageNum} of ${pages.length}`;
+        const text =
+          format === "number" ? `${pageNum}` : `${pageNum} of ${pages.length}`;
         const { width, height } = page.getSize();
         const textWidth = font.widthOfTextAtSize(text, 10);
 
@@ -138,7 +146,9 @@ export default function PageNumbersPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-6">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     ({totalPages} page{totalPages !== 1 ? "s" : ""})
                   </span>
@@ -169,7 +179,10 @@ export default function PageNumbersPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="startNumber" className="text-sm font-medium">
+                      <Label
+                        htmlFor="startNumber"
+                        className="text-sm font-medium"
+                      >
                         Start Number
                       </Label>
                       <Input
@@ -218,7 +231,12 @@ export default function PageNumbersPage() {
                 </div>
               </div>
 
-              <Button onClick={addPageNumbers} disabled={isProcessing} className="w-full" size="lg">
+              <Button
+                onClick={addPageNumbers}
+                disabled={isProcessing}
+                className="w-full"
+                size="lg"
+              >
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

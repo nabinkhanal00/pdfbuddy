@@ -22,9 +22,10 @@ export default function HomePage() {
                 Every tool you need to work with PDFs
               </h1>
               <p className="mt-6 text-lg leading-relaxed text-muted-foreground text-pretty sm:text-xl">
-                Merge, split, compress, convert, rotate, unlock, and watermark PDFs without the
-                usual friction. Most file tools stay in your browser, with server rendering only
-                where the job actually needs it.
+                Merge, split, compress, convert, rotate, unlock, and watermark
+                PDFs without the usual friction. Most file tools stay in your
+                browser, with server rendering only where the job actually needs
+                it.
               </p>
               <div className="mt-10 flex flex-wrap justify-center gap-4">
                 <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm text-muted-foreground">
@@ -56,16 +57,24 @@ export default function HomePage() {
 
         <div id="all-tools">
           {categories.map((category) => {
-            const toolsInCategory = pdfTools.filter((tool) => tool.category === category.id);
+            const toolsInCategory = pdfTools.filter(
+              (tool) => tool.category === category.id,
+            );
 
             return (
-              <section key={category.id} id={category.id} className="scroll-mt-20 py-16">
+              <section
+                key={category.id}
+                id={category.id}
+                className="scroll-mt-20 py-16"
+              >
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
                       {category.name}
                     </h2>
-                    <p className="mt-2 text-muted-foreground">{category.description}</p>
+                    <p className="mt-2 text-muted-foreground">
+                      {category.description}
+                    </p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {toolsInCategory.map((tool) => (
@@ -81,9 +90,12 @@ export default function HomePage() {
         <section className="border-y border-border bg-card py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="mb-12 text-center">
-              <h2 className="text-3xl font-bold text-foreground">Why choose PDF Buddy?</h2>
+              <h2 className="text-3xl font-bold text-foreground">
+                Why choose PDF Buddy?
+              </h2>
               <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
-                Fast file work, clear security boundaries, and no account friction
+                Fast file work, clear security boundaries, and no account
+                friction
               </p>
             </div>
             <div className="grid gap-8 md:grid-cols-3">
@@ -91,30 +103,38 @@ export default function HomePage() {
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
                   <Shield className="h-6 w-6 text-green-600" />
                 </div>
-                <h3 className="mb-2 font-semibold text-foreground">Privacy First</h3>
+                <h3 className="mb-2 font-semibold text-foreground">
+                  Privacy First
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Most file tools run directly in your browser. HTML to PDF uses a server render
-                  path because modern browsers cannot reliably print remote pages client-side.
+                  Most file tools run directly in your browser. HTML to PDF uses
+                  a server render path because modern browsers cannot reliably
+                  print remote pages client-side.
                 </p>
               </div>
               <div className="p-6 text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
                   <Zap className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="mb-2 font-semibold text-foreground">Lightning Fast</h3>
+                <h3 className="mb-2 font-semibold text-foreground">
+                  Lightning Fast
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  File-based tools avoid upload round-trips, and the heavier rendering tasks are
-                  isolated to the one tool that needs them.
+                  File-based tools avoid upload round-trips, and the heavier
+                  rendering tasks are isolated to the one tool that needs them.
                 </p>
               </div>
               <div className="p-6 text-center">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
                   <Globe className="h-6 w-6 text-amber-600" />
                 </div>
-                <h3 className="mb-2 font-semibold text-foreground">Works Anywhere</h3>
+                <h3 className="mb-2 font-semibold text-foreground">
+                  Works Anywhere
+                </h3>
                 <p className="text-sm text-muted-foreground">
-                  Use the app on any modern browser, and core file tools remain usable even when
-                  you lose your connection after the site has loaded.
+                  Use the app on any modern browser, and core file tools remain
+                  usable even when you lose your connection after the site has
+                  loaded.
                 </p>
               </div>
             </div>

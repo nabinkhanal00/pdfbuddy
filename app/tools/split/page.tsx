@@ -23,9 +23,10 @@ export default function SplitPDFPage() {
   const [splitMode, setSplitMode] = useState<SplitMode>("range");
   const [pageRange, setPageRange] = useState("");
   const [totalPages, setTotalPages] = useState(0);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -88,7 +89,7 @@ export default function SplitPDFPage() {
         const newPdf = await PDFDocument.create();
         const copiedPages = await newPdf.copyPages(
           pdf,
-          pages.map((p) => p - 1)
+          pages.map((p) => p - 1),
         );
         copiedPages.forEach((page) => newPdf.addPage(page));
 
@@ -148,7 +149,9 @@ export default function SplitPDFPage() {
               <div className="p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">{files[0].name}</span>
+                  <span className="font-medium text-foreground">
+                    {files[0].name}
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     ({totalPages} page{totalPages !== 1 ? "s" : ""})
                   </span>
@@ -158,9 +161,21 @@ export default function SplitPDFPage() {
                   <Label className="text-sm font-medium">Split Mode</Label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      { id: "range", label: "Extract Range", desc: "Get specific pages" },
-                      { id: "extract", label: "Custom Pages", desc: "Pick individual pages" },
-                      { id: "every", label: "Split All", desc: "One file per page" },
+                      {
+                        id: "range",
+                        label: "Extract Range",
+                        desc: "Get specific pages",
+                      },
+                      {
+                        id: "extract",
+                        label: "Custom Pages",
+                        desc: "Pick individual pages",
+                      },
+                      {
+                        id: "every",
+                        label: "Split All",
+                        desc: "One file per page",
+                      },
                     ].map((mode) => (
                       <button
                         key={mode.id}
@@ -224,7 +239,11 @@ export default function SplitPDFPage() {
                   currentToolId="split"
                   fileName={processedPdf.fileName}
                   outputBytes={processedPdf.bytes}
-                  mimeType={processedPdf.fileName.endsWith(".zip") ? "application/zip" : "application/pdf"}
+                  mimeType={
+                    processedPdf.fileName.endsWith(".zip")
+                      ? "application/zip"
+                      : "application/pdf"
+                  }
                 />
               )}
             </div>

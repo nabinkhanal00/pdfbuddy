@@ -23,7 +23,9 @@ export interface PendingPdfHandoff {
 
 function getIndexedDb() {
   if (typeof window === "undefined" || !("indexedDB" in window)) {
-    throw new Error("This browser does not support the local storage needed for processing handoffs.");
+    throw new Error(
+      "This browser does not support the local storage needed for processing handoffs.",
+    );
   }
 
   return window.indexedDB;
@@ -34,7 +36,10 @@ function openHandoffDatabase() {
     const request = getIndexedDb().open(DB_NAME, 1);
 
     request.onerror = () => {
-      reject(request.error ?? new Error("Could not open the browser handoff database."));
+      reject(
+        request.error ??
+          new Error("Could not open the browser handoff database."),
+      );
     };
 
     request.onupgradeneeded = () => {
@@ -53,7 +58,7 @@ function openHandoffDatabase() {
 
 async function withStore<T>(
   mode: IDBTransactionMode,
-  run: (store: IDBObjectStore) => IDBRequest<T>
+  run: (store: IDBObjectStore) => IDBRequest<T>,
 ) {
   const database = await openHandoffDatabase();
 
@@ -64,7 +69,10 @@ async function withStore<T>(
     let requestResult: T;
 
     request.onerror = () => {
-      reject(request.error ?? new Error("Could not access the browser handoff store."));
+      reject(
+        request.error ??
+          new Error("Could not access the browser handoff store."),
+      );
     };
 
     request.onsuccess = () => {
@@ -77,7 +85,10 @@ async function withStore<T>(
     };
 
     transaction.onerror = () => {
-      reject(transaction.error ?? new Error("Could not complete the browser handoff transaction."));
+      reject(
+        transaction.error ??
+          new Error("Could not complete the browser handoff transaction."),
+      );
       database.close();
     };
   });
@@ -104,8 +115,9 @@ export async function clearPendingPdfHandoff() {
 }
 
 export async function getPendingPdfHandoff(): Promise<PendingPdfHandoff | null> {
-  const record = await withStore<PendingPdfRecord | undefined>("readonly", (store) =>
-    store.get(PENDING_PDF_KEY)
+  const record = await withStore<PendingPdfRecord | undefined>(
+    "readonly",
+    (store) => store.get(PENDING_PDF_KEY),
   );
 
   if (!record) {
@@ -129,7 +141,7 @@ export async function consumePendingPdfHandoff(): Promise<PendingPdfHandoff | nu
 }
 
 export function usePendingPdfImport(
-  onFilesReady: (files: File[]) => void | Promise<void>
+  onFilesReady: (files: File[]) => void | Promise<void>,
 ) {
   const hasAttemptedRef = useRef(false);
   const onFilesReadyRef = useRef(onFilesReady);
@@ -152,7 +164,9 @@ export function usePendingPdfImport(
       setIsImporting(true);
 
       try {
-        console.log("PDF Buddy: Attempting to import pending PDF from handoff...");
+        console.log(
+          "PDF Buddy: Attempting to import pending PDF from handoff...",
+        );
         const pendingPdf = await getPendingPdfHandoff();
 
         if (!pendingPdf) {
@@ -169,14 +183,16 @@ export function usePendingPdfImport(
         // and verified we aren't cancelled.
         hasAttemptedRef.current = true;
 
-        console.log(`PDF Buddy: Importing "${pendingPdf.fileName}" (${pendingPdf.bytes.length} bytes)`);
+        console.log(
+          `PDF Buddy: Importing "${pendingPdf.fileName}" (${pendingPdf.bytes.length} bytes)`,
+        );
 
         const importedFile = new File([pendingPdf.bytes], pendingPdf.fileName, {
           type: pendingPdf.mimeType,
         });
 
         await onFilesReadyRef.current([importedFile]);
-        
+
         // Only clear AFTER successful handoff to the component
         await clearPendingPdfHandoff();
         console.log("PDF Buddy: Handoff complete and storage cleared.");

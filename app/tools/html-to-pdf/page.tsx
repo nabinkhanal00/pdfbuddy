@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { saveAs } from "file-saver";
-import { AlertCircle, Download, FileType, Globe, Loader2, Server } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  FileType,
+  Globe,
+  Loader2,
+  Server,
+} from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
@@ -19,9 +25,10 @@ export default function HTMLToPDFPage() {
   const [inputMode, setInputMode] = useState<InputMode>("html");
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
   const [htmlContent, setHtmlContent] = useState(`<!DOCTYPE html>
 <html>
 <head>
@@ -58,7 +65,7 @@ export default function HTMLToPDFPage() {
             : {
                 mode: "url",
                 url,
-              }
+              },
         ),
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +74,9 @@ export default function HTMLToPDFPage() {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(payload?.error || "Conversion failed.");
       }
 
@@ -93,7 +102,7 @@ export default function HTMLToPDFPage() {
       setError(
         error instanceof Error
           ? error.message
-          : "An error occurred while converting the document."
+          : "An error occurred while converting the document.",
       );
     } finally {
       setIsProcessing(false);
@@ -114,10 +123,13 @@ export default function HTMLToPDFPage() {
           <div className="flex items-start gap-3 rounded-2xl border border-border bg-card px-4 py-4">
             <Server className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
             <div className="space-y-1 text-sm">
-              <p className="font-medium text-foreground">Rendered with a server-side browser</p>
+              <p className="font-medium text-foreground">
+                Rendered with a server-side browser
+              </p>
               <p className="text-muted-foreground">
-                HTML and URL inputs are captured on the server, then returned as a downloadable
-                PDF. Other file-based tools in this app stay browser-first.
+                HTML and URL inputs are captured on the server, then returned as
+                a downloadable PDF. Other file-based tools in this app stay
+                browser-first.
               </p>
             </div>
           </div>
@@ -135,7 +147,9 @@ export default function HTMLToPDFPage() {
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <span className="block text-sm font-medium text-foreground">HTML Code</span>
+                    <span className="block text-sm font-medium text-foreground">
+                      HTML Code
+                    </span>
                     <span className="mt-1 block text-xs text-muted-foreground">
                       Paste or write HTML
                     </span>
@@ -148,7 +162,9 @@ export default function HTMLToPDFPage() {
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <span className="block text-sm font-medium text-foreground">Web URL</span>
+                    <span className="block text-sm font-medium text-foreground">
+                      Web URL
+                    </span>
                     <span className="mt-1 block text-xs text-muted-foreground">
                       Enter a website URL
                     </span>
@@ -173,8 +189,9 @@ export default function HTMLToPDFPage() {
                   <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
                     <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
                     <p className="text-sm text-amber-800">
-                      Some sites block automated capture, require login, or keep streaming network
-                      requests open. Reachable public pages work best.
+                      Some sites block automated capture, require login, or keep
+                      streaming network requests open. Reachable public pages
+                      work best.
                     </p>
                   </div>
                 </div>
@@ -218,7 +235,7 @@ export default function HTMLToPDFPage() {
             ) : (
               <>
                 <Download className="mr-2 h-4 w-4" />
-                Convert & Download PDF
+                Convert
               </>
             )}
           </Button>

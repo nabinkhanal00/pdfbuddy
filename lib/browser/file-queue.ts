@@ -3,7 +3,10 @@ export interface QueuedFile {
   id: string;
 }
 
-export function reconcileQueuedFiles(nextFiles: File[], previousFiles: QueuedFile[]) {
+export function reconcileQueuedFiles(
+  nextFiles: File[],
+  previousFiles: QueuedFile[],
+) {
   const remaining = [...previousFiles];
 
   return nextFiles.map((file) => {

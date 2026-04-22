@@ -35,7 +35,7 @@ export function FileDropzone({
         onFilesChange(acceptedFiles.slice(0, 1));
       }
     },
-    [files, onFilesChange, multiple, maxFiles]
+    [files, onFilesChange, multiple, maxFiles],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -65,33 +65,48 @@ export function FileDropzone({
           files.length > 0 ? "p-6" : "p-12",
           isDragActive
             ? "border-primary bg-primary/5"
-            : "border-border hover:border-primary/50 hover:bg-muted/50"
+            : "border-border hover:border-primary/50 hover:bg-muted/50",
         )}
       >
         <input {...getInputProps()} />
-        <div className={cn("flex items-center justify-center gap-4", files.length > 0 ? "flex-row" : "flex-col")}>
+        <div
+          className={cn(
+            "flex items-center justify-center gap-4",
+            files.length > 0 ? "flex-row" : "flex-col",
+          )}
+        >
           <div
             className={cn(
               "flex items-center justify-center rounded-full transition-colors",
               files.length > 0 ? "h-10 w-10" : "h-16 w-16",
-              isDragActive ? "bg-primary/10" : "bg-muted"
+              isDragActive ? "bg-primary/10" : "bg-muted",
             )}
           >
             <Upload
               className={cn(
                 "transition-colors",
                 files.length > 0 ? "h-5 w-5" : "h-8 w-8",
-                isDragActive ? "text-primary" : "text-muted-foreground"
+                isDragActive ? "text-primary" : "text-muted-foreground",
               )}
             />
           </div>
           <div className={files.length > 0 ? "text-left" : "text-center"}>
-            <p className={cn("font-medium text-foreground", files.length > 0 ? "text-base" : "text-lg")}>
+            <p
+              className={cn(
+                "font-medium text-foreground",
+                files.length > 0 ? "text-base" : "text-lg",
+              )}
+            >
               {files.length > 0 ? "Add more files" : label}
             </p>
-            {files.length === 0 && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+            {files.length === 0 && (
+              <p className="text-sm text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-1">
-              Max {formatFileSize(maxSize)} per file{multiple ? `, up to ${maxFiles} files` : ""}
+              Max {formatFileSize(maxSize)} per file
+              {multiple ? `, up to ${maxFiles} files` : ""}
             </p>
           </div>
         </div>
@@ -112,8 +127,12 @@ export function FileDropzone({
                   <File className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatFileSize(file.size)}
+                  </p>
                 </div>
                 <Button
                   variant="ghost"

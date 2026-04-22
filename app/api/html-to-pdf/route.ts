@@ -22,12 +22,15 @@ function jsonError(message: string, status: number) {
       headers: {
         "Cache-Control": "no-store",
       },
-    }
+    },
   );
 }
 
 function sanitizeFilenamePart(value: string) {
-  return value.replace(/[^a-z0-9-]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase();
+  return value
+    .replace(/[^a-z0-9-]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
 }
 
 export async function POST(request: NextRequest) {
@@ -86,7 +89,7 @@ export async function POST(request: NextRequest) {
 
     return jsonError(
       "Could not generate the PDF. Check the source content or try again in a moment.",
-      500
+      500,
     );
   }
 }

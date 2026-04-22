@@ -36,7 +36,7 @@ export function ToolLayout({
             <div
               className={cn(
                 "flex h-14 w-14 items-center justify-center rounded-xl shadow-sm",
-                iconBgColor
+                iconBgColor,
               )}
             >
               <Icon className={cn("h-7 w-7", iconColor)} />
@@ -48,7 +48,9 @@ export function ToolLayout({
           </div>
         </div>
       </div>
-      <div className="flex-1 mx-auto max-w-4xl w-full px-4 sm:px-6 lg:px-8 py-8">{children}</div>
+      <div className="flex-1 mx-auto max-w-4xl w-full px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </div>
     </div>
   );
 }

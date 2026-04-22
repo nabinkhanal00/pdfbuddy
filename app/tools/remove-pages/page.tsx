@@ -20,9 +20,10 @@ export default function RemovePagesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedPages, setSelectedPages] = useState<Set<number>>(new Set());
   const [pagePreviews, setPagePreviews] = useState<string[]>([]);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
 
   const handleFileChange = async (newFiles: File[]) => {
     setFiles(newFiles);
@@ -40,26 +41,26 @@ export default function RemovePagesPage() {
         // Generate previews for first 20 pages
         const previews: string[] = [];
         const maxPreviews = Math.min(pdf.numPages, 20);
-        
+
         for (let i = 1; i <= maxPreviews; i++) {
           const page = await pdf.getPage(i);
           const scale = 0.3;
           const viewport = page.getViewport({ scale });
-          
+
           const canvas = document.createElement("canvas");
           const context = canvas.getContext("2d")!;
           canvas.width = viewport.width;
           canvas.height = viewport.height;
-          
+
           await page.render({
             canvas,
             canvasContext: context,
             viewport: viewport,
           }).promise;
-          
+
           previews.push(canvas.toDataURL());
         }
-        
+
         setPagePreviews(previews);
       } catch (error) {
         console.error("Error reading PDF:", error);
@@ -94,8 +95,10 @@ export default function RemovePagesPage() {
       const pdf = await PDFDocument.load(arrayBuffer);
 
       // Get pages to keep (not selected for removal)
-      const pagesToKeep = Array.from({ length: totalPages }, (_, i) => i)
-        .filter((i) => !selectedPages.has(i + 1));
+      const pagesToKeep = Array.from(
+        { length: totalPages },
+        (_, i) => i,
+      ).filter((i) => !selectedPages.has(i + 1));
 
       const newPdf = await PDFDocument.create();
       const copiedPages = await newPdf.copyPages(pdf, pagesToKeep);
@@ -143,7 +146,9 @@ export default function RemovePagesPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium text-foreground">{files[0].name}</span>
+                    <span className="font-medium text-foreground">
+                      {files[0].name}
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       ({totalPages} page{totalPages !== 1 ? "s" : ""})
                     </span>
@@ -160,51 +165,55 @@ export default function RemovePagesPage() {
                 </p>
 
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-3 max-h-96 overflow-y-auto p-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => {
-                        togglePage(pageNum);
-                        setProcessedPdf(null);
-                      }}
-                      className={cn(
-                        "relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden",
-                        selectedPages.has(pageNum)
-                          ? "border-rose-500 ring-2 ring-rose-200"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      {pagePreviews[pageNum - 1] ? (
-                        <div className="relative h-full w-full">
-                          <Image
-                            src={pagePreviews[pageNum - 1]}
-                            alt={`Page ${pageNum}`}
-                            fill
-                            unoptimized
-                            sizes="(max-width: 768px) 20vw, 12vw"
-                            className={cn(
-                              "object-cover",
-                              selectedPages.has(pageNum) && "opacity-50"
-                            )}
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <span className="text-xs text-muted-foreground">{pageNum}</span>
-                        </div>
-                      )}
-                      <span className="absolute bottom-1 left-1 text-xs bg-black/70 text-white px-1.5 py-0.5 rounded">
-                        {pageNum}
-                      </span>
-                      {selectedPages.has(pageNum) && (
-                        <div className="absolute inset-0 bg-rose-500/20 flex items-center justify-center">
-                          <div className="h-6 w-6 rounded-full bg-rose-500 flex items-center justify-center">
-                            <Check className="h-4 w-4 text-white" />
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (pageNum) => (
+                      <button
+                        key={pageNum}
+                        onClick={() => {
+                          togglePage(pageNum);
+                          setProcessedPdf(null);
+                        }}
+                        className={cn(
+                          "relative aspect-[3/4] rounded-lg border-2 transition-all overflow-hidden",
+                          selectedPages.has(pageNum)
+                            ? "border-rose-500 ring-2 ring-rose-200"
+                            : "border-border hover:border-primary/50",
+                        )}
+                      >
+                        {pagePreviews[pageNum - 1] ? (
+                          <div className="relative h-full w-full">
+                            <Image
+                              src={pagePreviews[pageNum - 1]}
+                              alt={`Page ${pageNum}`}
+                              fill
+                              unoptimized
+                              sizes="(max-width: 768px) 20vw, 12vw"
+                              className={cn(
+                                "object-cover",
+                                selectedPages.has(pageNum) && "opacity-50",
+                              )}
+                            />
                           </div>
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <span className="text-xs text-muted-foreground">
+                              {pageNum}
+                            </span>
+                          </div>
+                        )}
+                        <span className="absolute bottom-1 left-1 text-xs bg-black/70 text-white px-1.5 py-0.5 rounded">
+                          {pageNum}
+                        </span>
+                        {selectedPages.has(pageNum) && (
+                          <div className="absolute inset-0 bg-rose-500/20 flex items-center justify-center">
+                            <div className="h-6 w-6 rounded-full bg-rose-500 flex items-center justify-center">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    ),
+                  )}
                 </div>
               </div>
 
@@ -220,10 +229,10 @@ export default function RemovePagesPage() {
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Removing Pages...
                   </>
+                ) : selectedPages.size > 0 ? (
+                  `Remove ${selectedPages.size} Page${selectedPages.size !== 1 ? "s" : ""}`
                 ) : (
-                  selectedPages.size > 0
-                    ? `Remove ${selectedPages.size} Page${selectedPages.size !== 1 ? "s" : ""}`
-                    : "Select Pages to Remove"
+                  "Select Pages to Remove"
                 )}
               </Button>
 

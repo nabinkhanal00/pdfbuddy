@@ -21,7 +21,14 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { PDFDocument } from "pdf-lib";
 import { saveAs } from "file-saver";
-import { FileImage, Download, Loader2, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
+import {
+  FileImage,
+  Download,
+  Loader2,
+  ArrowUp,
+  ArrowDown,
+  GripVertical,
+} from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ToolLayout } from "@/components/tool-layout";
@@ -40,8 +47,21 @@ interface SortableImageCardProps {
   total: number;
 }
 
-function SortableImageCard({ file, index, onMove, previewUrl, total }: SortableImageCardProps) {
-  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+function SortableImageCard({
+  file,
+  index,
+  onMove,
+  previewUrl,
+  total,
+}: SortableImageCardProps) {
+  const {
+    attributes,
+    isDragging,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({
     id: file.id,
   });
 
@@ -52,7 +72,10 @@ function SortableImageCard({ file, index, onMove, previewUrl, total }: SortableI
         transform: CSS.Transform.toString(transform),
         transition,
       }}
-      className={cn("relative group rounded-lg border border-border overflow-hidden bg-card", isDragging && "z-10 shadow-xl")}
+      className={cn(
+        "relative group rounded-lg border border-border overflow-hidden bg-card",
+        isDragging && "z-10 shadow-xl",
+      )}
     >
       <div className="aspect-square bg-muted/50 flex items-center justify-center">
         {previewUrl ? (
@@ -110,9 +133,10 @@ export default function ImageToPDFPage() {
   const [files, setFiles] = useState<QueuedFile[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [processedPdf, setProcessedPdf] = useState<{ bytes: Uint8Array; fileName: string } | null>(
-    null
-  );
+  const [processedPdf, setProcessedPdf] = useState<{
+    bytes: Uint8Array;
+    fileName: string;
+  } | null>(null);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const previewsRef = useRef<Record<string, string>>({});
 
@@ -124,12 +148,14 @@ export default function ImageToPDFPage() {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   useEffect(() => {
     return () => {
-      Object.values(previewsRef.current).forEach((url) => URL.revokeObjectURL(url));
+      Object.values(previewsRef.current).forEach((url) =>
+        URL.revokeObjectURL(url),
+      );
     };
   }, []);
 
@@ -284,11 +310,20 @@ export default function ImageToPDFPage() {
                 <h3 className="font-medium text-foreground">
                   {files.length} image{files.length !== 1 ? "s" : ""} selected
                 </h3>
-                <p className="text-sm text-muted-foreground">Drag the handle or use the arrows to reorder</p>
+                <p className="text-sm text-muted-foreground">
+                  Drag the handle or use the arrows to reorder
+                </p>
               </div>
 
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext items={files.map((file) => file.id)} strategy={rectSortingStrategy}>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={files.map((file) => file.id)}
+                  strategy={rectSortingStrategy}
+                >
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {files.map((file, index) => (
                       <SortableImageCard
@@ -307,8 +342,12 @@ export default function ImageToPDFPage() {
               {isProcessing && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Creating PDF...</span>
-                    <span className="text-foreground font-medium">{Math.round(progress)}%</span>
+                    <span className="text-muted-foreground">
+                      Creating PDF...
+                    </span>
+                    <span className="text-foreground font-medium">
+                      {Math.round(progress)}%
+                    </span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
                     <div
