@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveAs } from "file-saver";
-import { ArrowRight, Download, Loader2, Sparkles } from "lucide-react";
+import { ArrowRight, Download, Loader2, Sparkles, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PdfPreviewModal } from "./pdf-preview-modal";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export function ProcessedPdfActions({
 }: ProcessedPdfActionsProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [handoffError, setHandoffError] = useState<string | null>(null);
   const [isRouting, setIsRouting] = useState(false);
 
@@ -99,9 +101,20 @@ export function ProcessedPdfActions({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={downloadPdf} className="sm:flex-1">
+            {mimeType === "application/pdf" && (
+              <Button
+                variant="outline"
+                onClick={() => setPreviewOpen(true)}
+                className="border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 sm:flex-1 transition-all duration-200"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </Button>
+            )}
+
+            <Button onClick={downloadPdf} className="sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all duration-200">
               <Download className="mr-2 h-4 w-4" />
-              {mimeType.includes("zip") ? "Download ZIP" : "Download File"}
+              {mimeType.includes("zip") ? "Download ZIP" : "Download PDF"}
             </Button>
 
             {!hideProcessFurther &&
@@ -110,7 +123,7 @@ export function ProcessedPdfActions({
                 <Button
                   variant="outline"
                   onClick={() => setDialogOpen(true)}
-                  className="border-emerald-300 bg-white text-emerald-900 hover:bg-emerald-100 sm:flex-1"
+                  className="border-emerald-200 bg-emerald-50/50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 sm:flex-1 transition-all duration-200"
                 >
                   <ArrowRight className="mr-2 h-4 w-4" />
                   Process Further
@@ -168,6 +181,15 @@ export function ProcessedPdfActions({
           </div>
         </DialogContent>
       </Dialog>
+
+      {mimeType === "application/pdf" && (
+        <PdfPreviewModal
+          isOpen={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          outputBytes={outputBytes}
+          fileName={fileName}
+        />
+      )}
     </div>
   );
 }
